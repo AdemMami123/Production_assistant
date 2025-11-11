@@ -91,12 +91,14 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ### 2. Create Environment Files
 
 #### Frontend
+
 ```bash
 cd apps/frontend
 cp .env.example .env.local
 ```
 
 Edit `.env.local` and replace values:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -104,12 +106,14 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
 #### Backend
+
 ```bash
 cd apps/backend
 cp .env.example .env
 ```
 
 Edit `.env` and replace values:
+
 ```env
 PORT=4000
 NODE_ENV=development
@@ -121,22 +125,27 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### 3. Verify Setup
 
 #### Test Frontend
+
 ```bash
 cd apps/frontend
 npm run dev
 ```
+
 Visit: http://localhost:3000
 
 #### Test Backend
+
 ```bash
 cd apps/backend
 npm run dev
 ```
+
 Visit: http://localhost:4000/health
 
 ## Security Best Practices
 
 ### ✅ DO:
+
 - Keep `.env` and `.env.local` in `.gitignore`
 - Use different keys for development and production
 - Rotate keys regularly
@@ -145,6 +154,7 @@ Visit: http://localhost:4000/health
 - Use environment-specific files (`.env.development`, `.env.production`)
 
 ### ❌ DON'T:
+
 - Commit `.env` files to Git
 - Share service role keys publicly
 - Use production keys in development
@@ -156,6 +166,7 @@ Visit: http://localhost:4000/health
 ### Environment Variables by Platform
 
 #### Vercel (Frontend)
+
 1. Go to Project Settings → Environment Variables
 2. Add each variable:
    - `NEXT_PUBLIC_SUPABASE_URL`
@@ -163,6 +174,7 @@ Visit: http://localhost:4000/health
    - `NEXT_PUBLIC_API_URL` (your backend URL)
 
 #### Railway/Render/Heroku (Backend)
+
 1. Go to Environment Variables section
 2. Add each variable:
    - `PORT` (usually auto-set)
@@ -172,21 +184,25 @@ Visit: http://localhost:4000/health
    - `SUPABASE_SERVICE_ROLE_KEY`
 
 #### Docker
+
 Use `.env` file or docker-compose environment section (see Docker docs).
 
 ## Troubleshooting
 
 ### Frontend Can't Connect to Backend
+
 - Check `NEXT_PUBLIC_API_URL` is correct
 - Verify backend is running on specified port
 - Check CORS settings in backend
 
 ### Supabase Authentication Fails
+
 - Verify Supabase URL is correct
 - Check keys are not truncated
 - Ensure using correct key for frontend/backend
 
 ### Environment Variables Not Loading
+
 - Restart development server after changes
 - Check file is named correctly (`.env.local` for Next.js)
 - Verify variables have correct prefix (`NEXT_PUBLIC_` for browser)
@@ -220,6 +236,7 @@ apps/frontend/
 ```
 
 Next.js loads them in this priority (highest to lowest):
+
 1. `.env.local`
 2. `.env.[NODE_ENV]`
 3. `.env`

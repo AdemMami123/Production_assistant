@@ -19,16 +19,19 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ## 📦 Installation Checklist
 
 - [ ] Navigate to project directory
+
   ```bash
   cd c:\Users\ademm\OneDrive\Desktop\Personal Projects\productivity_assistant
   ```
 
 - [ ] Install dependencies
+
   ```bash
   npm install
   ```
 
 - [ ] Build shared package
+
   ```bash
   cd packages/shared
   npm run build
@@ -57,6 +60,7 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ### Frontend
 
 - [ ] Copy frontend environment template
+
   ```bash
   cp apps/frontend/.env.example apps/frontend/.env.local
   ```
@@ -69,6 +73,7 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ### Backend
 
 - [ ] Copy backend environment template
+
   ```bash
   cp apps/backend/.env.example apps/backend/.env
   ```
@@ -83,6 +88,7 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ## 🚀 First Run Checklist
 
 - [ ] Start development servers
+
   ```bash
   npm run dev
   ```
@@ -104,6 +110,7 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 
 - [ ] Docker installed and running
 - [ ] Copy Docker environment file
+
   ```bash
   cp .env.docker.example .env
   ```
@@ -115,11 +122,13 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
   - [ ] SUPABASE_SERVICE_ROLE_KEY
 
 - [ ] Start Docker services
+
   ```bash
   npm run docker:up
   ```
 
 - [ ] Verify containers are running
+
   ```bash
   docker ps
   ```
@@ -147,18 +156,23 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ## 🧪 Testing Checklist
 
 - [ ] Run linting
+
   ```bash
   npm run lint
   ```
+
   - [ ] No errors should appear
 
 - [ ] Check code formatting
+
   ```bash
   npm run format:check
   ```
+
   - [ ] All files should be formatted
 
 - [ ] Format code
+
   ```bash
   npm run format
   ```
@@ -172,6 +186,7 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ## 🏗️ Build Checklist
 
 - [ ] Build all packages
+
   ```bash
   npm run build
   ```
@@ -199,11 +214,13 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ### Port Already in Use
 
 - [ ] Check if port 3000 is in use
+
   ```powershell
   netstat -ano | findstr :3000
   ```
 
 - [ ] Check if port 4000 is in use
+
   ```powershell
   netstat -ano | findstr :4000
   ```
@@ -216,6 +233,7 @@ Use this checklist to ensure your Productivity Assistant monorepo is properly co
 ### Module Not Found Errors
 
 - [ ] Clear and reinstall
+
   ```bash
   npm run clean
   npm install

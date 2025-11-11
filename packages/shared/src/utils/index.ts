@@ -6,7 +6,7 @@ export const formatDate = (date: Date | string): string => {
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
@@ -26,7 +26,7 @@ export const formatRelativeTime = (date: Date | string): string => {
   if (diffInMinutes < 60) return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`
   if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`
   if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`
-  
+
   return formatDate(d)
 }
 

@@ -1,11 +1,11 @@
 import { Router } from 'express'
-import tasksRouter from './tasks'
+import taskRouter from './task.routes'
 import usersRouter from './users'
 
 const router = Router()
 
 // Mount route modules
-router.use('/tasks', tasksRouter)
+router.use('/tasks', taskRouter)
 router.use('/users', usersRouter)
 
 // API info endpoint
@@ -16,8 +16,8 @@ router.get('/', (req, res) => {
     endpoints: {
       health: '/health',
       tasks: '/api/tasks',
-      users: '/api/users'
-    }
+      users: '/api/users',
+    },
   })
 })
 

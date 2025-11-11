@@ -7,6 +7,7 @@
 ### Root Configuration Files
 
 #### ESLint
+
 - ✅ **.eslintrc.json** - Root ESLint configuration
   - Extends recommended ESLint rules
   - TypeScript ESLint plugin configured
@@ -18,6 +19,7 @@
   - Ignore patterns for build outputs and dependencies
 
 #### Prettier
+
 - ✅ **.prettierrc** - Code formatting configuration
   - No semicolons
   - Single quotes for strings
@@ -50,10 +52,13 @@ All packages have their own `.eslintrc.json` files that extend the root configur
 ```json
 {
   "@typescript-eslint/no-explicit-any": "warn",
-  "@typescript-eslint/no-unused-vars": ["error", {
-    "argsIgnorePattern": "^_",
-    "varsIgnorePattern": "^_"
-  }],
+  "@typescript-eslint/no-unused-vars": [
+    "error",
+    {
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_"
+    }
+  ],
   "no-console": ["warn", { "allow": ["warn", "error"] }]
 }
 ```
@@ -102,6 +107,7 @@ npm run format:check
 ### IDE Integration
 
 #### VS Code
+
 Add these settings to `.vscode/settings.json`:
 
 ```json
@@ -111,12 +117,7 @@ Add these settings to `.vscode/settings.json`:
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ]
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"]
 }
 ```
 
@@ -138,18 +139,21 @@ Add these settings to `.vscode/settings.json`:
 ## Features
 
 ### Code Quality
+
 - ✅ TypeScript-aware linting
 - ✅ Consistent code style across monorepo
 - ✅ Automatic code formatting
 - ✅ Pre-configured best practices
 
 ### Developer Experience
+
 - ✅ Format on save (with IDE setup)
 - ✅ Auto-fix on save (with IDE setup)
 - ✅ Consistent formatting across team
 - ✅ No style debates
 
 ### Integration
+
 - ✅ Works with Next.js
 - ✅ Works with Node.js/Express
 - ✅ Works with TypeScript
@@ -158,16 +162,19 @@ Add these settings to `.vscode/settings.json`:
 ## Best Practices
 
 1. **Run format before committing:**
+
    ```bash
    npm run format
    ```
 
 2. **Check for lint errors:**
+
    ```bash
    npm run lint
    ```
 
 3. **Fix auto-fixable issues:**
+
    ```bash
    npm run lint -- --fix
    ```

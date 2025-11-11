@@ -8,12 +8,12 @@ router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     res.json({
       success: true,
-      data: req.user
+      data: req.user,
     })
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch user profile'
+      error: 'Failed to fetch user profile',
     })
   }
 })
@@ -26,12 +26,12 @@ router.put('/me', authenticate, async (req: AuthRequest, res: Response) => {
     // Example: Update user in database
     res.json({
       success: true,
-      data: { ...req.user, ...updates }
+      data: { ...req.user, ...updates },
     })
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to update user profile'
+      error: 'Failed to update user profile',
     })
   }
 })

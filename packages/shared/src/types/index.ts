@@ -1,3 +1,6 @@
+// Export task types from separate file
+export * from './task'
+
 // User types
 export interface User {
   id: string
@@ -7,28 +10,6 @@ export interface User {
   createdAt: Date
   updatedAt: Date
 }
-
-// Task types
-export interface Task {
-  id: string
-  userId: string
-  title: string
-  description?: string
-  completed: boolean
-  priority: TaskPriority
-  dueDate?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-export enum TaskPriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  URGENT = 'urgent'
-}
-
-export type TaskStatus = 'todo' | 'in-progress' | 'completed' | 'archived'
 
 // API Response types
 export interface ApiResponse<T = any> {

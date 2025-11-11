@@ -25,6 +25,7 @@ Both frontend and backend use optimized multi-stage Docker builds:
 5. **runner** - Minimal production image
 
 ### Benefits
+
 - ✅ Smaller final images (only production code)
 - ✅ Faster builds with layer caching
 - ✅ Secure (no build tools in production)
@@ -33,6 +34,7 @@ Both frontend and backend use optimized multi-stage Docker builds:
 ## Services Configuration
 
 ### Frontend Service
+
 - **Port:** 3000
 - **Container:** productivity-frontend
 - **Base Image:** node:20-alpine
@@ -40,6 +42,7 @@ Both frontend and backend use optimized multi-stage Docker builds:
 - **Dockerfile:** apps/frontend/Dockerfile
 
 ### Backend Service
+
 - **Port:** 4000
 - **Container:** productivity-backend
 - **Base Image:** node:20-alpine
@@ -50,12 +53,14 @@ Both frontend and backend use optimized multi-stage Docker builds:
 ### Optional Services (Commented Out)
 
 #### PostgreSQL
+
 - **Port:** 5432
 - **Image:** postgres:16-alpine
 - **Volume:** Persistent data storage
 - Enable if not using Supabase
 
 #### Redis
+
 - **Port:** 6379
 - **Image:** redis:7-alpine
 - Enable for caching/sessions
@@ -63,6 +68,7 @@ Both frontend and backend use optimized multi-stage Docker builds:
 ## Network Configuration
 
 ### app-network
+
 - **Type:** Bridge network
 - **Purpose:** Inter-service communication
 - Frontend can reach backend at `http://backend:4000`
@@ -73,6 +79,7 @@ Both frontend and backend use optimized multi-stage Docker builds:
 ### Development with Docker
 
 #### Build and Start All Services
+
 ```bash
 # Copy environment file
 cp .env.docker.example .env
@@ -84,11 +91,13 @@ npm run docker:up
 ```
 
 Or using Docker Compose directly:
+
 ```bash
 docker-compose up -d --build
 ```
 
 #### View Logs
+
 ```bash
 # All services
 docker-compose logs -f
@@ -99,16 +108,19 @@ docker-compose logs -f backend
 ```
 
 #### Stop Services
+
 ```bash
 npm run docker:down
 ```
 
 Or:
+
 ```bash
 docker-compose down
 ```
 
 #### Rebuild Specific Service
+
 ```bash
 # Rebuild frontend
 docker-compose build frontend
@@ -120,11 +132,13 @@ docker-compose build backend
 ### Production Deployment
 
 #### Build Production Images
+
 ```bash
 npm run docker:build
 ```
 
 #### Push to Registry
+
 ```bash
 # Tag images
 docker tag productivity-assistant-frontend:latest your-registry/frontend:latest
@@ -140,11 +154,13 @@ docker push your-registry/backend:latest
 ### Required Variables
 
 Create `.env` file from template:
+
 ```bash
 cp .env.docker.example .env
 ```
 
 Fill in these values:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -155,12 +171,14 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ### Internal Service URLs
 
 Docker Compose automatically handles internal networking:
+
 - Backend URL for frontend: `http://backend:4000`
 - Frontend URL for backend: `http://frontend:3000`
 
 ## Docker Compose Commands
 
 ### Basic Operations
+
 ```bash
 # Start services
 docker-compose up -d
@@ -179,6 +197,7 @@ docker-compose down -v
 ```
 
 ### Build Operations
+
 ```bash
 # Build all services
 docker-compose build
@@ -191,6 +210,7 @@ docker-compose build frontend
 ```
 
 ### Logs and Debugging
+
 ```bash
 # All logs
 docker-compose logs
@@ -206,6 +226,7 @@ docker-compose logs --tail=100
 ```
 
 ### Execute Commands in Container
+
 ```bash
 # Open shell in frontend container
 docker-compose exec frontend sh
@@ -220,7 +241,9 @@ docker-compose exec backend npm run lint
 ## Health Checks
 
 ### Backend Health Check
+
 The backend includes a health check endpoint that Docker monitors:
+
 - **Endpoint:** `http://localhost:4000/health`
 - **Interval:** Every 30 seconds
 - **Timeout:** 10 seconds
@@ -228,6 +251,7 @@ The backend includes a health check endpoint that Docker monitors:
 - **Start Period:** 40 seconds
 
 ### Check Health Status
+
 ```bash
 docker-compose ps
 ```
@@ -237,6 +261,7 @@ Look for "healthy" status in the State column.
 ## Volume Management
 
 ### PostgreSQL Data (if enabled)
+
 ```bash
 # Backup database
 docker-compose exec postgres pg_dump -U postgres productivity > backup.sql
@@ -248,17 +273,20 @@ docker-compose exec -T postgres psql -U postgres productivity < backup.sql
 ## Optimization Tips
 
 ### Image Size Optimization
+
 - ✅ Using Alpine Linux (minimal base)
 - ✅ Multi-stage builds
 - ✅ .dockerignore excludes unnecessary files
 - ✅ Only production dependencies in final image
 
 ### Build Speed Optimization
+
 - ✅ Layer caching for dependencies
 - ✅ Separate shared package build
 - ✅ Parallel builds with docker-compose
 
 ### Security Best Practices
+
 - ✅ Non-root user in containers
 - ✅ No development tools in production image
 - ✅ Minimal attack surface with Alpine
@@ -267,6 +295,7 @@ docker-compose exec -T postgres psql -U postgres productivity < backup.sql
 ## Troubleshooting
 
 ### Port Already in Use
+
 ```bash
 # Find process using port
 # Windows PowerShell:
@@ -277,6 +306,7 @@ taskkill /PID <pid> /F
 ```
 
 ### Container Won't Start
+
 ```bash
 # Check logs
 docker-compose logs backend
@@ -289,6 +319,7 @@ docker-compose build --no-cache backend
 ```
 
 ### Network Issues
+
 ```bash
 # Recreate network
 docker-compose down
@@ -297,6 +328,7 @@ docker-compose up -d
 ```
 
 ### Clean Slate
+
 ```bash
 # Remove everything and start fresh
 docker-compose down -v
@@ -320,6 +352,7 @@ module.exports = {
 ### Environment-Specific Configs
 
 Create different compose files:
+
 ```bash
 # Development
 docker-compose.yml
@@ -329,6 +362,7 @@ docker-compose.prod.yml
 ```
 
 Use specific file:
+
 ```bash
 docker-compose -f docker-compose.prod.yml up -d
 ```
@@ -336,6 +370,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ### Scaling Services
 
 Scale horizontally:
+
 ```bash
 docker-compose up -d --scale backend=3
 ```
@@ -343,6 +378,7 @@ docker-compose up -d --scale backend=3
 ### Monitoring
 
 Add monitoring containers:
+
 - Prometheus for metrics
 - Grafana for dashboards
 - Loki for log aggregation
@@ -350,6 +386,7 @@ Add monitoring containers:
 ## CI/CD Integration
 
 ### GitHub Actions Example
+
 ```yaml
 - name: Build Docker images
   run: docker-compose build

@@ -56,6 +56,7 @@ productivity-assistant/
 ## 🚀 Tech Stack
 
 ### Frontend
+
 - **[Next.js 14](https://nextjs.org/)** - React framework with App Router
 - **[TypeScript](https://www.typescriptlang.org/)** - Type safety
 - **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first styling
@@ -64,6 +65,7 @@ productivity-assistant/
 - **[Supabase](https://supabase.com/)** - Authentication & Database
 
 ### Backend
+
 - **[Node.js 20](https://nodejs.org/)** & **[Express](https://expressjs.com/)** - API server
 - **[TypeScript](https://www.typescriptlang.org/)** - Type safety
 - **[Supabase](https://supabase.com/)** - Database & Auth
@@ -71,10 +73,12 @@ productivity-assistant/
 - **Helmet, CORS, Morgan** - Security & logging
 
 ### Shared
+
 - **TypeScript** - Shared types and utilities
 - **Zod** - Validation schemas
 
 ### Dev Tools
+
 - **[ESLint](https://eslint.org/)** - Code linting
 - **[Prettier](https://prettier.io/)** - Code formatting
 - **[Docker](https://www.docker.com/)** - Containerization
@@ -83,6 +87,7 @@ productivity-assistant/
 ## 📦 Quick Start
 
 ### Prerequisites
+
 - Node.js 18.0.0 or higher
 - npm 9.0.0 or higher
 - Supabase account (free tier works)
@@ -141,6 +146,7 @@ npm run docker:down
 ## 🛠️ Available Scripts
 
 ### Root Level
+
 ```bash
 npm run dev              # Run all apps in development
 npm run build            # Build all apps
@@ -151,18 +157,21 @@ npm run clean            # Remove all node_modules and build outputs
 ```
 
 ### Frontend
+
 ```bash
 npm run dev:frontend     # Run Next.js dev server
 npm run build:frontend   # Build for production
 ```
 
 ### Backend
+
 ```bash
 npm run dev:backend      # Run Express dev server
 npm run build:backend    # Build TypeScript
 ```
 
 ### Docker
+
 ```bash
 npm run docker:up        # Start all services
 npm run docker:down      # Stop all services
@@ -186,6 +195,7 @@ Comprehensive documentation is available in the `/docs` folder:
 ## 🔑 Environment Variables
 
 ### Frontend (`.env.local`)
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
@@ -193,6 +203,7 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
 ### Backend (`.env`)
+
 ```env
 PORT=4000
 NODE_ENV=development
@@ -206,9 +217,11 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 ## 🧪 API Endpoints
 
 ### Public
+
 - `GET /health` - Health check
 
 ### Protected (Require Authentication)
+
 - `GET /api/tasks` - Get all tasks
 - `POST /api/tasks` - Create a task
 - `PUT /api/tasks/:id` - Update a task
@@ -246,6 +259,7 @@ Available components: button, card, dialog, dropdown-menu, form, input, toast, a
 ## 🛣️ Roadmap
 
 ### Implemented ✅
+
 - [x] Monorepo structure with npm workspaces
 - [x] Next.js 14 frontend with App Router
 - [x] Express.js backend with TypeScript
@@ -258,6 +272,7 @@ Available components: button, card, dialog, dropdown-menu, form, input, toast, a
 - [x] Complete documentation
 
 ### Next Steps 🚧
+
 - [ ] Authentication pages (login/signup)
 - [ ] Database schema & migrations
 - [ ] Real CRUD operations
@@ -268,6 +283,7 @@ Available components: button, card, dialog, dropdown-menu, form, input, toast, a
 ## 🤝 Contributing
 
 This is a template/starter project. Feel free to:
+
 - Fork and customize for your needs
 - Report issues or suggest improvements
 - Share your implementations
@@ -279,6 +295,7 @@ MIT
 ## 🙏 Acknowledgments
 
 Built with amazing open-source technologies:
+
 - [Next.js](https://nextjs.org/)
 - [Shadcn UI](https://ui.shadcn.com/)
 - [Tailwind CSS](https://tailwindcss.com/)

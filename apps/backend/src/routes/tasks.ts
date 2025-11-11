@@ -9,17 +9,17 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
     // Example: Fetch tasks from database
     const tasks = [
       { id: 1, title: 'Sample Task 1', completed: false },
-      { id: 2, title: 'Sample Task 2', completed: true }
+      { id: 2, title: 'Sample Task 2', completed: true },
     ]
 
     res.json({
       success: true,
-      data: tasks
+      data: tasks,
     })
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch tasks'
+      error: 'Failed to fetch tasks',
     })
   }
 })
@@ -35,17 +35,17 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
       title,
       description,
       completed: false,
-      userId: req.user?.id
+      userId: req.user?.id,
     }
 
     res.status(201).json({
       success: true,
-      data: newTask
+      data: newTask,
     })
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to create task'
+      error: 'Failed to create task',
     })
   }
 })
@@ -59,12 +59,12 @@ router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     // Example: Update task in database
     res.json({
       success: true,
-      data: { id, ...updates }
+      data: { id, ...updates },
     })
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to update task'
+      error: 'Failed to update task',
     })
   }
 })
@@ -77,12 +77,12 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     // Example: Delete task from database
     res.json({
       success: true,
-      message: `Task ${id} deleted`
+      message: `Task ${id} deleted`,
     })
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: 'Failed to delete task'
+      error: 'Failed to delete task',
     })
   }
 })

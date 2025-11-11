@@ -16,17 +16,20 @@
 ### Installation
 
 #### 1. Clone the Repository (if applicable)
+
 ```bash
 cd c:\Users\ademm\OneDrive\Desktop\Personal Projects\productivity_assistant
 ```
 
 #### 2. Install Dependencies
+
 ```bash
 # Install all dependencies for the monorepo
 npm install
 ```
 
 This will install dependencies for:
+
 - Root workspace
 - Frontend (Next.js)
 - Backend (Node.js/Express)
@@ -35,12 +38,14 @@ This will install dependencies for:
 #### 3. Set Up Environment Variables
 
 ##### Frontend
+
 ```bash
 cd apps/frontend
 cp .env.example .env.local
 ```
 
 Edit `.env.local` with your Supabase credentials:
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
@@ -48,12 +53,14 @@ NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
 ##### Backend
+
 ```bash
 cd apps/backend
 cp .env.example .env
 ```
 
 Edit `.env` with your Supabase credentials:
+
 ```env
 PORT=4000
 NODE_ENV=development
@@ -63,6 +70,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 #### 4. Build Shared Package
+
 ```bash
 cd packages/shared
 npm run build
@@ -71,6 +79,7 @@ npm run build
 ### Running the Application
 
 #### Option 1: Run All Services Concurrently
+
 ```bash
 # From the root directory
 npm run dev
@@ -81,18 +90,21 @@ This starts both frontend and backend simultaneously.
 #### Option 2: Run Services Separately
 
 ##### Terminal 1 - Backend
+
 ```bash
 npm run dev:backend
 # Backend will run on http://localhost:4000
 ```
 
 ##### Terminal 2 - Frontend
+
 ```bash
 npm run dev:frontend
 # Frontend will run on http://localhost:3000
 ```
 
 #### Option 3: Docker
+
 ```bash
 # Copy Docker environment file
 cp .env.docker.example .env
@@ -209,16 +221,19 @@ productivity-assistant/
 ### Add a New npm Package
 
 #### Frontend
+
 ```bash
 npm install <package-name> --workspace=apps/frontend
 ```
 
 #### Backend
+
 ```bash
 npm install <package-name> --workspace=apps/backend
 ```
 
 #### Shared
+
 ```bash
 npm install <package-name> --workspace=packages/shared
 ```
@@ -247,11 +262,13 @@ npx shadcn-ui@latest add card
 ## Using Shared Package
 
 ### Import in Frontend
+
 ```typescript
 import { Task, formatDate, TaskSchema } from '@productivity-assistant/shared'
 ```
 
 ### Import in Backend
+
 ```typescript
 import { ApiResponse, HTTP_STATUS } from '@productivity-assistant/shared'
 ```
@@ -259,12 +276,14 @@ import { ApiResponse, HTTP_STATUS } from '@productivity-assistant/shared'
 ## Supabase Setup
 
 ### 1. Create a Supabase Project
+
 1. Go to [supabase.com](https://supabase.com)
 2. Click "New Project"
 3. Fill in project details
 4. Wait for project to be provisioned
 
 ### 2. Get API Credentials
+
 1. Go to Settings → API
 2. Copy:
    - Project URL
@@ -272,6 +291,7 @@ import { ApiResponse, HTTP_STATUS } from '@productivity-assistant/shared'
    - `service_role` key (for backend)
 
 ### 3. Create Tables (Example)
+
 ```sql
 -- Run in Supabase SQL Editor
 
@@ -311,6 +331,7 @@ CREATE POLICY "Users can delete their own tasks"
 ## Available Scripts
 
 ### Root Level
+
 - `npm run dev` - Run all apps in development
 - `npm run build` - Build all apps
 - `npm run lint` - Lint all packages
@@ -318,14 +339,17 @@ CREATE POLICY "Users can delete their own tasks"
 - `npm run clean` - Remove all node_modules and build outputs
 
 ### Frontend
+
 - `npm run dev:frontend` - Run frontend dev server
 - `npm run build:frontend` - Build frontend for production
 
 ### Backend
+
 - `npm run dev:backend` - Run backend dev server
 - `npm run build:backend` - Build backend for production
 
 ### Docker
+
 - `npm run docker:up` - Start all services with Docker
 - `npm run docker:down` - Stop all Docker services
 - `npm run docker:build` - Build Docker images
@@ -333,6 +357,7 @@ CREATE POLICY "Users can delete their own tasks"
 ## Troubleshooting
 
 ### Port Already in Use
+
 ```powershell
 # Windows PowerShell
 # Find process on port 3000
@@ -343,6 +368,7 @@ taskkill /PID <pid> /F
 ```
 
 ### TypeScript Errors After Installation
+
 ```bash
 # Rebuild shared package
 cd packages/shared
@@ -353,6 +379,7 @@ rm -rf node_modules/.cache
 ```
 
 ### Module Not Found Errors
+
 ```bash
 # Clear and reinstall
 npm run clean
@@ -360,6 +387,7 @@ npm install
 ```
 
 ### Environment Variables Not Loading
+
 - Restart development server
 - Check file names (`.env.local` for Next.js, `.env` for backend)
 - Verify variables have correct prefix (`NEXT_PUBLIC_` for browser-exposed vars)
@@ -372,6 +400,7 @@ npm install
    - Add shared types in `packages/shared/src/types/`
 
 2. **Add More Shadcn Components**
+
    ```bash
    cd apps/frontend
    npx shadcn-ui@latest add dialog
@@ -410,6 +439,7 @@ npm install
 ## Summary
 
 You now have a fully functional monorepo with:
+
 - ✅ Next.js frontend with Tailwind, Framer Motion, and Shadcn UI
 - ✅ Node.js/Express backend with TypeScript
 - ✅ Shared utilities package

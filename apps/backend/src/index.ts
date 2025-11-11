@@ -4,7 +4,7 @@ import helmet from 'helmet'
 import morgan from 'morgan'
 import compression from 'compression'
 import dotenv from 'dotenv'
-import { supabase } from './lib/supabase'
+import { supabase } from './config/supabase'
 import apiRoutes from './routes'
 import { errorHandler } from './middleware/errorHandler'
 
@@ -16,10 +16,12 @@ const PORT = process.env.PORT || 4000
 
 // Middleware
 app.use(helmet()) // Security headers
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}))
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  })
+)
 app.use(compression()) // Compress responses
 app.use(morgan('dev')) // Logging
 app.use(express.json()) // Parse JSON bodies
@@ -30,7 +32,7 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   })
 })
 
@@ -41,7 +43,7 @@ app.use('/api', apiRoutes)
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Not Found',
-    message: `Route ${req.url} not found`
+    message: `Route ${req.url} not found`,
   })
 })
 
