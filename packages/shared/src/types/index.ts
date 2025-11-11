@@ -1,6 +1,12 @@
 // Export task types from separate file
 export * from './task'
 export * from './profile'
+export * from './ai'
+export * from './team'
+export * from './meeting'
+export * from './comment'
+export * from './progress'
+export * from './environment'
 
 // User types
 export interface User {

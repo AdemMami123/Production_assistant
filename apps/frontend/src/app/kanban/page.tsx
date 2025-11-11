@@ -15,8 +15,9 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core'
 import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { Users } from 'lucide-react'
+import { Users, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { KanbanColumn } from '@/components/kanban/KanbanColumn'
 import { KanbanCard } from '@/components/kanban/KanbanCard'
 import { TaskModal } from '@/components/tasks/TaskModal'
@@ -67,6 +68,7 @@ const columns: { id: TaskStatus; title: string; color: string }[] = [
 export default function KanbanPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [aiLoading, setAiLoading] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [originalTaskStatus, setOriginalTaskStatus] = useState<TaskStatus | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -392,6 +394,66 @@ export default function KanbanPage() {
     setIsModalOpen(true)
   }
 
+  const handleAIPrioritize = async () => {
+    if (tasks.length === 0) {
+      return
+    }
+
+    setAiLoading(true)
+    try {
+      const response = await fetch('http://localhost:4000/api/ai/prioritize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tasks: tasks.map(task => ({
+            id: task.id,
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            priority: task.priority,
+            category: task.category,
+            due_date: task.due_date,
+            created_at: task.created_at,
+          })),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to prioritize tasks')
+      }
+
+      const result = await response.json()
+
+      // Update tasks with suggested priorities
+      if (result.prioritizedTasks && result.prioritizedTasks.length > 0) {
+        const updates = result.prioritizedTasks.map(async (pt: any) => {
+          if (pt.suggestedPriority) {
+            await supabase
+              .from('tasks')
+              .update({ priority: pt.suggestedPriority })
+              .eq('id', pt.taskId)
+          }
+        })
+
+        await Promise.all(updates)
+
+        // Refresh tasks
+        await fetchTasks()
+
+        // Show success message
+        console.log('AI Prioritization summary:', result.summary)
+        alert(`Tasks prioritized!\n\n${result.summary}`)
+      }
+    } catch (error) {
+      console.error('Error with AI prioritization:', error)
+      alert('Failed to prioritize tasks with AI. Please try again.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   const activeTask = tasks.find(task => task.id === activeId)
 
   return (
@@ -411,8 +473,20 @@ export default function KanbanPage() {
             <p className="text-muted-foreground">Drag and drop tasks to organize your workflow</p>
           </div>
 
-          {/* Online Users Indicator */}
+          {/* Actions and Online Users */}
           <div className="flex items-center gap-2">
+            {tasks.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAIPrioritize}
+                disabled={aiLoading || loading}
+                className="gap-2"
+              >
+                <Sparkles className={`w-4 h-4 ${aiLoading ? 'animate-pulse' : ''}`} />
+                {aiLoading ? 'Analyzing...' : 'AI Prioritize'}
+              </Button>
+            )}
             {onlineUsers > 0 && (
               <Badge variant="secondary" className="flex items-center gap-2">
                 <Users className="w-3 h-3" />

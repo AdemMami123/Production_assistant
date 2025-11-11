@@ -5,12 +5,8 @@ import {
   updateTaskSchema,
   taskQuerySchema,
   taskIdSchema,
-} from '@productivity-assistant/shared/validation/task'
-import type {
-  Task,
-  CreateTaskInput,
-  UpdateTaskInput,
-} from '@productivity-assistant/shared/types/task'
+} from '@productivity-assistant/shared'
+import type { Task, CreateTaskInput, UpdateTaskInput } from '@productivity-assistant/shared'
 
 // Extend Express Request to include user
 export interface AuthenticatedRequest extends Request {

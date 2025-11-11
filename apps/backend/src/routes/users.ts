@@ -1,7 +1,15 @@
 import { Router, Request, Response } from 'express'
 import { authenticate, AuthRequest } from '../middleware/auth'
+import { authenticateUser } from '../middleware/auth.middleware'
+import { searchUsersByEmail, getUserById } from '../controllers/user.controller'
 
 const router = Router()
+
+// Search users by email (protected)
+router.get('/search', authenticateUser, searchUsersByEmail)
+
+// Get user by ID (protected)
+router.get('/:id', authenticateUser, getUserById)
 
 // Get current user profile (protected)
 router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {

@@ -14,6 +14,9 @@ export interface Task {
   priority: TaskPriority
   category?: string | null
   due_date?: string | null
+  team_id?: string | null
+  assigned_to?: string | null
+  assigned_by?: string | null
   created_at: string
   updated_at: string
 }
@@ -26,6 +29,8 @@ export interface CreateTaskInput {
   priority?: TaskPriority
   category?: string
   due_date?: string
+  team_id?: string
+  assigned_to?: string
 }
 
 // Task update input (all fields optional except id)
@@ -46,6 +51,9 @@ export interface TaskQueryFilters {
   due_before?: string
   due_after?: string
   search?: string
+  team_id?: string
+  assigned_to?: string
+  is_personal?: boolean
   limit?: number
   offset?: number
   order_by?: 'created_at' | 'updated_at' | 'due_date' | 'priority'

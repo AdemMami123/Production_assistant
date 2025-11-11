@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Sparkles } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -99,6 +100,7 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
     due_date: '',
   })
   const [loading, setLoading] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Initialize form data when task changes
@@ -189,6 +191,51 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
         delete newErrors[field as string]
         return newErrors
       })
+    }
+  }
+
+  const handleAICategorize = async () => {
+    if (!formData.title.trim()) {
+      setErrors((prev: Record<string, string>) => ({
+        ...prev,
+        title: 'Please enter a title before using AI categorization',
+      }))
+      return
+    }
+
+    setAiLoading(true)
+    try {
+      const response = await fetch('http://localhost:4000/api/ai/categorize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          priority: formData.priority,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to categorize task')
+      }
+
+      const result = await response.json()
+
+      // Update category with AI suggestion
+      handleChange('category', result.category.toLowerCase())
+
+      // Show success feedback (optional - could add a toast notification)
+      console.log('AI categorization:', result)
+    } catch (error) {
+      console.error('Error with AI categorization:', error)
+      setErrors((prev: Record<string, string>) => ({
+        ...prev,
+        ai: 'Failed to get AI category suggestion. Please try again.',
+      }))
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -313,7 +360,20 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Category */}
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="category">Category</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleAICategorize}
+                    disabled={loading || aiLoading || !formData.title.trim()}
+                    className="h-6 gap-1 text-xs"
+                  >
+                    <Sparkles className={`w-3 h-3 ${aiLoading ? 'animate-pulse' : ''}`} />
+                    {aiLoading ? 'Analyzing...' : 'AI Suggest'}
+                  </Button>
+                </div>
                 <Select
                   value={formData.category}
                   onValueChange={value => handleChange('category', value)}
@@ -330,6 +390,15 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.ai && (
+                  <motion.p
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="text-sm text-muted-foreground"
+                  >
+                    {errors.ai}
+                  </motion.p>
+                )}
               </div>
 
               {/* Due Date */}
