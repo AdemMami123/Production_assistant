@@ -68,6 +68,7 @@ export default function KanbanPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [originalTaskStatus, setOriginalTaskStatus] = useState<TaskStatus | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
@@ -191,7 +192,10 @@ export default function KanbanPage() {
 
   // Drag handlers
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string)
+    const taskId = event.active.id as string
+    const task = tasks.find(t => t.id === taskId)
+    setActiveId(taskId)
+    setOriginalTaskStatus(task?.status || null)
   }
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -221,15 +225,17 @@ export default function KanbanPage() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
+    const activeId = active.id as string
     setActiveId(null)
+    setOriginalTaskStatus(null)
 
     if (!over) return
 
-    const activeId = active.id as string
     const overId = over.id as string
 
-    const activeTask = tasks.find(t => t.id === activeId)
-    if (!activeTask) return
+    // Get current task state
+    const currentTask = tasks.find(t => t.id === activeId)
+    if (!currentTask) return
 
     // Determine new status
     let newStatus: TaskStatus | null = null
@@ -245,7 +251,7 @@ export default function KanbanPage() {
         newStatus = overTask.status
 
         // Reorder within the same column
-        if (activeTask.status === overTask.status) {
+        if (currentTask.status === overTask.status) {
           const columnTasks = tasksByStatus[newStatus]
           const oldIndex = columnTasks.findIndex(t => t.id === activeId)
           const newIndex = columnTasks.findIndex(t => t.id === overId)
@@ -259,25 +265,52 @@ export default function KanbanPage() {
       }
     }
 
-    // Update status in database AND local state if changed
-    if (newStatus && activeTask.status !== newStatus) {
-      // Optimistically update local state immediately
-      setTasks(tasks =>
-        tasks.map(task => (task.id === activeId ? { ...task, status: newStatus } : task))
-      )
+    // eslint-disable-next-line no-console
+    console.log('Drag end check:', {
+      activeId,
+      newStatus,
+      originalTaskStatus,
+      shouldUpdate: newStatus && originalTaskStatus && originalTaskStatus !== newStatus,
+    })
 
+    // Update status in database if changed (compare with original status)
+    if (newStatus && originalTaskStatus && originalTaskStatus !== newStatus) {
       try {
+        // Get current user
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (!user) {
+          throw new Error('Not authenticated')
+        }
+
+        // Update task status in database
         const { error } = await supabase
           .from('tasks')
-          .update({ status: newStatus })
+          .update({
+            status: newStatus,
+          })
           .eq('id', activeId)
+          .eq('user_id', user.id)
 
-        if (error) throw error
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.error('Database error updating task:', error)
+          throw error
+        }
+
+        // eslint-disable-next-line no-console
+        console.log('Task status updated successfully:', { taskId: activeId, newStatus })
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error updating task status:', error)
-        // Revert optimistic update on error
-        fetchTasks()
+        // Revert to previous state
+        setTasks(prevTasks =>
+          prevTasks.map(task =>
+            task.id === activeId ? { ...task, status: originalTaskStatus } : task
+          )
+        )
       }
     }
   }
