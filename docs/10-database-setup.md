@@ -55,18 +55,19 @@ supabase db execute -f supabase/migrations/001_create_tasks_schema.sql
 ### Tables
 
 #### `tasks`
-| Column | Type | Description | Constraints |
-|--------|------|-------------|-------------|
-| `id` | UUID | Primary key | Auto-generated |
-| `user_id` | UUID | Foreign key to auth.users | NOT NULL, ON DELETE CASCADE |
-| `title` | TEXT | Task title | NOT NULL |
-| `description` | TEXT | Task description | Nullable |
-| `status` | TEXT | Task status | CHECK: todo, in_progress, completed, archived |
-| `priority` | TEXT | Task priority | CHECK: low, medium, high, urgent |
-| `category` | TEXT | Task category | Nullable |
-| `due_date` | TIMESTAMPTZ | Task due date | Nullable |
-| `created_at` | TIMESTAMPTZ | Creation timestamp | Default: NOW() |
-| `updated_at` | TIMESTAMPTZ | Last update timestamp | Auto-updated |
+
+| Column        | Type        | Description               | Constraints                                   |
+| ------------- | ----------- | ------------------------- | --------------------------------------------- |
+| `id`          | UUID        | Primary key               | Auto-generated                                |
+| `user_id`     | UUID        | Foreign key to auth.users | NOT NULL, ON DELETE CASCADE                   |
+| `title`       | TEXT        | Task title                | NOT NULL                                      |
+| `description` | TEXT        | Task description          | Nullable                                      |
+| `status`      | TEXT        | Task status               | CHECK: todo, in_progress, completed, archived |
+| `priority`    | TEXT        | Task priority             | CHECK: low, medium, high, urgent              |
+| `category`    | TEXT        | Task category             | Nullable                                      |
+| `due_date`    | TIMESTAMPTZ | Task due date             | Nullable                                      |
+| `created_at`  | TIMESTAMPTZ | Creation timestamp        | Default: NOW()                                |
+| `updated_at`  | TIMESTAMPTZ | Last update timestamp     | Auto-updated                                  |
 
 ### Indexes
 
@@ -98,7 +99,9 @@ All policies enforce user isolation - users can only access their own tasks.
 ### Views
 
 #### `user_task_stats`
+
 Aggregated statistics per user:
+
 - `total_tasks` - Total number of tasks
 - `completed_tasks` - Tasks with status 'completed'
 - `todo_tasks` - Tasks with status 'todo'
@@ -169,32 +172,36 @@ archived
 ## Common SQL Queries
 
 ### Get All Tasks for a User
+
 ```sql
-SELECT * FROM tasks 
+SELECT * FROM tasks
 WHERE user_id = auth.uid()
 ORDER BY created_at DESC;
 ```
 
 ### Get Tasks by Status
+
 ```sql
-SELECT * FROM tasks 
-WHERE user_id = auth.uid() 
+SELECT * FROM tasks
+WHERE user_id = auth.uid()
   AND status = 'in_progress'
 ORDER BY priority DESC, due_date ASC;
 ```
 
 ### Get Overdue Tasks
+
 ```sql
-SELECT * FROM tasks 
-WHERE user_id = auth.uid() 
+SELECT * FROM tasks
+WHERE user_id = auth.uid()
   AND due_date < NOW()
   AND status != 'completed'
 ORDER BY due_date ASC;
 ```
 
 ### Get Task Statistics
+
 ```sql
-SELECT * FROM user_task_stats 
+SELECT * FROM user_task_stats
 WHERE user_id = auth.uid();
 ```
 
@@ -205,6 +212,7 @@ WHERE user_id = auth.uid();
 ### RLS Policies Not Working
 
 If you can see other users' tasks:
+
 1. Verify RLS is enabled: `ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;`
 2. Check policies exist: `SELECT * FROM pg_policies WHERE tablename = 'tasks';`
 3. Ensure you're authenticated when querying
@@ -212,6 +220,7 @@ If you can see other users' tasks:
 ### Foreign Key Constraint Errors
 
 If insertions fail with FK errors:
+
 1. Verify the user exists in `auth.users`
 2. Check the `user_id` value matches an existing user
 3. Ensure you're using `auth.uid()` for current user
@@ -219,6 +228,7 @@ If insertions fail with FK errors:
 ### Migration Fails
 
 If the migration script fails:
+
 1. Check for existing tables: `DROP TABLE IF EXISTS tasks CASCADE;`
 2. Verify UUID extension: `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`
 3. Run parts of the script separately to identify the issue

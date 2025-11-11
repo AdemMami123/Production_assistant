@@ -6,7 +6,11 @@ import {
   taskQuerySchema,
   taskIdSchema,
 } from '@productivity-assistant/shared/validation/task'
-import type { Task, CreateTaskInput, UpdateTaskInput } from '@productivity-assistant/shared/types/task'
+import type {
+  Task,
+  CreateTaskInput,
+  UpdateTaskInput,
+} from '@productivity-assistant/shared/types/task'
 
 // Extend Express Request to include user
 export interface AuthenticatedRequest extends Request {
@@ -31,10 +35,7 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
     const filters = taskQuerySchema.parse(req.query)
 
     // Build query
-    let query = supabase
-      .from('tasks')
-      .select('*', { count: 'exact' })
-      .eq('user_id', userId)
+    let query = supabase.from('tasks').select('*', { count: 'exact' }).eq('user_id', userId)
 
     // Apply filters
     if (filters.status) {
@@ -87,7 +88,9 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error: any) {
     console.error('Error in getTasks:', error)
     if (error.name === 'ZodError') {
-      return res.status(400).json({ success: false, error: 'Invalid query parameters', details: error.errors })
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid query parameters', details: error.errors })
     }
     return res.status(500).json({ success: false, error: 'Internal server error' })
   }
@@ -125,7 +128,9 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error: any) {
     console.error('Error in getTaskById:', error)
     if (error.name === 'ZodError') {
-      return res.status(400).json({ success: false, error: 'Invalid task ID', details: error.errors })
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid task ID', details: error.errors })
     }
     return res.status(500).json({ success: false, error: 'Internal server error' })
   }
@@ -164,7 +169,9 @@ export const createTask = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error: any) {
     console.error('Error in createTask:', error)
     if (error.name === 'ZodError') {
-      return res.status(400).json({ success: false, error: 'Invalid task data', details: error.errors })
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid task data', details: error.errors })
     }
     return res.status(500).json({ success: false, error: 'Internal server error' })
   }
@@ -214,7 +221,9 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error: any) {
     console.error('Error in updateTask:', error)
     if (error.name === 'ZodError') {
-      return res.status(400).json({ success: false, error: 'Invalid task data', details: error.errors })
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid task data', details: error.errors })
     }
     return res.status(500).json({ success: false, error: 'Internal server error' })
   }
@@ -234,11 +243,7 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = taskIdSchema.parse(req.params)
 
     // Delete task
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId)
+    const { error } = await supabase.from('tasks').delete().eq('id', id).eq('user_id', userId)
 
     if (error) {
       console.error('Error deleting task:', error)
@@ -249,7 +254,9 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
   } catch (error: any) {
     console.error('Error in deleteTask:', error)
     if (error.name === 'ZodError') {
-      return res.status(400).json({ success: false, error: 'Invalid task ID', details: error.errors })
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid task ID', details: error.errors })
     }
     return res.status(500).json({ success: false, error: 'Internal server error' })
   }

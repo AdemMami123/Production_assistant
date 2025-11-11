@@ -31,7 +31,10 @@ export const authenticateUser = async (
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
     // Verify the token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token)
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token)
 
     if (error || !user) {
       return res.status(401).json({
@@ -69,7 +72,9 @@ export const optionalAuth = async (
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7)
-      const { data: { user } } = await supabase.auth.getUser(token)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token)
 
       if (user) {
         req.user = {

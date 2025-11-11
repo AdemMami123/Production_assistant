@@ -5,6 +5,7 @@
 ### 1. Database Schema (`supabase/migrations/001_create_tasks_schema.sql`)
 
 ✅ **Tasks Table** with columns:
+
 - `id` (UUID, primary key)
 - `user_id` (UUID, foreign key to auth.users)
 - `title` (text, required)
@@ -16,13 +17,16 @@
 - `created_at` / `updated_at` (auto-managed)
 
 ✅ **Row Level Security (RLS)** enabled with policies:
+
 - Users can only view/insert/update/delete their own tasks
 - Automatic user isolation based on JWT
 
 ✅ **Indexes** for performance:
+
 - user_id, status, due_date, category
 
 ✅ **View** for task statistics:
+
 - `user_task_stats` - aggregated counts per user
 
 ---
@@ -44,6 +48,7 @@ TaskPriority
 ### 3. Validation Schemas (`packages/shared/src/validation/task.ts`)
 
 Zod schemas for:
+
 - `createTaskSchema` - validates new tasks
 - `updateTaskSchema` - validates task updates
 - `taskQuerySchema` - validates query parameters
@@ -101,6 +106,7 @@ supabase db push
 ### Step 3: Update Environment Variables
 
 Your backend `.env` should already have:
+
 ```env
 SUPABASE_URL=https://yfsrklzmbymaaytntrsw.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
@@ -155,14 +161,14 @@ curl -X GET "http://localhost:4000/api/tasks/stats" \
 
 ## 📊 API Endpoints Summary
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/tasks` | Get all tasks (with filters) | ✅ Yes |
-| GET | `/api/tasks/:id` | Get specific task | ✅ Yes |
-| POST | `/api/tasks` | Create new task | ✅ Yes |
-| PUT | `/api/tasks/:id` | Update task | ✅ Yes |
-| DELETE | `/api/tasks/:id` | Delete task | ✅ Yes |
-| GET | `/api/tasks/stats` | Get task statistics | ✅ Yes |
+| Method | Endpoint           | Description                  | Auth Required |
+| ------ | ------------------ | ---------------------------- | ------------- |
+| GET    | `/api/tasks`       | Get all tasks (with filters) | ✅ Yes        |
+| GET    | `/api/tasks/:id`   | Get specific task            | ✅ Yes        |
+| POST   | `/api/tasks`       | Create new task              | ✅ Yes        |
+| PUT    | `/api/tasks/:id`   | Update task                  | ✅ Yes        |
+| DELETE | `/api/tasks/:id`   | Delete task                  | ✅ Yes        |
+| GET    | `/api/tasks/stats` | Get task statistics          | ✅ Yes        |
 
 ---
 
@@ -180,6 +186,7 @@ curl -X GET "http://localhost:4000/api/tasks/stats" \
 - `order_direction` - Sort direction (asc, desc)
 
 **Example:**
+
 ```
 GET /api/tasks?status=in_progress&priority=high&limit=10&order_by=due_date
 ```
@@ -263,16 +270,19 @@ GET /api/tasks?status=in_progress&priority=high&limit=10&order_by=due_date
 ## 🐛 Troubleshooting
 
 ### "Task not found" when task exists
+
 - Check RLS policies are enabled
 - Verify user_id matches authenticated user
 - Ensure JWT token is valid
 
 ### "Unauthorized" errors
+
 - Check JWT token is included in Authorization header
 - Verify token format: `Bearer <token>`
 - Token might be expired (login again)
 
 ### Database connection errors
+
 - Verify SUPABASE_URL in .env
 - Check SUPABASE_SERVICE_ROLE_KEY is correct
 - Test connection in Supabase dashboard
@@ -282,6 +292,7 @@ GET /api/tasks?status=in_progress&priority=high&limit=10&order_by=due_date
 ## ✅ Implementation Complete!
 
 You now have a fully functional Tasks CRUD API with:
+
 - ✅ Secure database schema with RLS
 - ✅ Complete REST API endpoints
 - ✅ JWT authentication

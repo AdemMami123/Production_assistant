@@ -28,7 +28,9 @@ Authorization: Bearer <your-jwt-token>
 
 2. **Via Supabase Client**
    ```typescript
-   const { data: { session } } = await supabase.auth.getSession()
+   const {
+     data: { session },
+   } = await supabase.auth.getSession()
    const token = session?.access_token
    ```
 
@@ -44,18 +46,18 @@ Get all tasks for the authenticated user with optional filtering, sorting, and p
 
 #### Query Parameters
 
-| Parameter | Type | Description | Default | Required |
-|-----------|------|-------------|---------|----------|
-| `status` | string | Filter by status (todo, in_progress, completed, archived) | - | No |
-| `priority` | string | Filter by priority (low, medium, high, urgent) | - | No |
-| `category` | string | Filter by category | - | No |
-| `due_before` | ISO datetime | Tasks due before this date | - | No |
-| `due_after` | ISO datetime | Tasks due after this date | - | No |
-| `search` | string | Search in title and description | - | No |
-| `limit` | number | Number of results per page (max 100) | 50 | No |
-| `offset` | number | Number of results to skip | 0 | No |
-| `order_by` | string | Sort field (created_at, updated_at, due_date, priority) | created_at | No |
-| `order_direction` | string | Sort direction (asc, desc) | desc | No |
+| Parameter         | Type         | Description                                               | Default    | Required |
+| ----------------- | ------------ | --------------------------------------------------------- | ---------- | -------- |
+| `status`          | string       | Filter by status (todo, in_progress, completed, archived) | -          | No       |
+| `priority`        | string       | Filter by priority (low, medium, high, urgent)            | -          | No       |
+| `category`        | string       | Filter by category                                        | -          | No       |
+| `due_before`      | ISO datetime | Tasks due before this date                                | -          | No       |
+| `due_after`       | ISO datetime | Tasks due after this date                                 | -          | No       |
+| `search`          | string       | Search in title and description                           | -          | No       |
+| `limit`           | number       | Number of results per page (max 100)                      | 50         | No       |
+| `offset`          | number       | Number of results to skip                                 | 0          | No       |
+| `order_by`        | string       | Sort field (created_at, updated_at, due_date, priority)   | created_at | No       |
+| `order_direction` | string       | Sort direction (asc, desc)                                | desc       | No       |
 
 #### Example Request
 
@@ -103,8 +105,8 @@ Get a specific task by its ID.
 #### URL Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | UUID | Task ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Task ID     |
 
 #### Example Request
 
@@ -165,14 +167,14 @@ Create a new task for the authenticated user.
 
 #### Body Fields
 
-| Field | Type | Description | Required | Default |
-|-------|------|-------------|----------|---------|
-| `title` | string (max 200) | Task title | Yes | - |
-| `description` | string (max 2000) | Task description | No | null |
-| `status` | enum | Status (todo, in_progress, completed, archived) | No | todo |
-| `priority` | enum | Priority (low, medium, high, urgent) | No | medium |
-| `category` | string (max 50) | Task category | No | null |
-| `due_date` | ISO datetime | Due date and time | No | null |
+| Field         | Type              | Description                                     | Required | Default |
+| ------------- | ----------------- | ----------------------------------------------- | -------- | ------- |
+| `title`       | string (max 200)  | Task title                                      | Yes      | -       |
+| `description` | string (max 2000) | Task description                                | No       | null    |
+| `status`      | enum              | Status (todo, in_progress, completed, archived) | No       | todo    |
+| `priority`    | enum              | Priority (low, medium, high, urgent)            | No       | medium  |
+| `category`    | string (max 50)   | Task category                                   | No       | null    |
+| `due_date`    | ISO datetime      | Due date and time                               | No       | null    |
 
 #### Example Request
 
@@ -237,8 +239,8 @@ Update an existing task. Only provided fields will be updated.
 #### URL Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | UUID | Task ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Task ID     |
 
 #### Request Body (All fields optional)
 
@@ -303,8 +305,8 @@ Delete a task permanently.
 #### URL Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `id` | UUID | Task ID |
+| --------- | ---- | ----------- |
+| `id`      | UUID | Task ID     |
 
 #### Example Request
 
@@ -487,6 +489,7 @@ curl -X DELETE "http://localhost:4000/api/tasks/TASK_ID" \
 Currently, there is no rate limiting implemented. This should be added in production.
 
 Recommended limits:
+
 - 100 requests per minute per user
 - 1000 requests per hour per user
 

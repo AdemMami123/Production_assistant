@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { ListTodo, Home } from 'lucide-react'
 
 interface DashboardClientProps {
   user: User
@@ -29,10 +31,24 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center gap-6">
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Productivity Assistant
               </h1>
+              <div className="hidden md:flex items-center gap-4">
+                <Link href="/dashboard">
+                  <Button variant="ghost" size="sm">
+                    <Home className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Link href="/tasks">
+                  <Button variant="ghost" size="sm">
+                    <ListTodo className="w-4 h-4 mr-2" />
+                    Tasks
+                  </Button>
+                </Link>
+              </div>
             </div>
             <Button variant="outline" onClick={handleLogout} disabled={loading}>
               {loading ? 'Logging out...' : 'Logout'}
