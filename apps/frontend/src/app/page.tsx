@@ -23,11 +23,7 @@ export default function Home() {
           Shadcn UI with Supabase Authentication
         </p>
         <div className="flex gap-4 justify-center">
-          <Button
-            size="lg"
-            className="text-lg"
-            onClick={() => router.push('/signup')}
-          >
+          <Button size="lg" className="text-lg" onClick={() => router.push('/signup')}>
             Get Started
           </Button>
           <Button

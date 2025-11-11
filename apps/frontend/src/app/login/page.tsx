@@ -52,9 +52,7 @@ export default function LoginPage() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Welcome Back
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Sign in to your account to continue
-            </p>
+            <p className="text-muted-foreground mt-2">Sign in to your account to continue</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
@@ -65,7 +63,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 required
                 disabled={loading}
               />
@@ -78,7 +76,7 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 required
                 disabled={loading}
               />
@@ -102,20 +100,14 @@ export default function LoginPage() {
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
               Don't have an account?{' '}
-              <Link
-                href="/signup"
-                className="text-primary font-semibold hover:underline"
-              >
+              <Link href="/signup" className="text-primary font-semibold hover:underline">
                 Sign up
               </Link>
             </p>
           </div>
 
           <div className="mt-4 text-center">
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-primary"
-            >
+            <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
               ← Back to home
             </Link>
           </div>

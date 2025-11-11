@@ -34,11 +34,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                 Productivity Assistant
               </h1>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              disabled={loading}
-            >
+            <Button variant="outline" onClick={handleLogout} disabled={loading}>
               {loading ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
@@ -64,9 +60,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                   Welcome back, {user.user_metadata?.name || 'User'}!
                 </h2>
-                <p className="text-muted-foreground mt-1">
-                  {user.email}
-                </p>
+                <p className="text-muted-foreground mt-1">{user.email}</p>
               </div>
             </div>
           </div>
@@ -79,25 +73,15 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    User ID
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">
-                    {user.id}
-                  </p>
+                  <label className="text-sm font-medium text-muted-foreground">User ID</label>
+                  <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{user.id}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Email
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                    {user.email}
-                  </p>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="mt-1 text-sm text-gray-900 dark:text-white">{user.email}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Name
-                  </label>
+                  <label className="text-sm font-medium text-muted-foreground">Name</label>
                   <p className="mt-1 text-sm text-gray-900 dark:text-white">
                     {user.user_metadata?.name || 'Not set'}
                   </p>
@@ -115,9 +99,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                   </p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Last Sign In
-                  </label>
+                  <label className="text-sm font-medium text-muted-foreground">Last Sign In</label>
                   <p className="mt-1 text-sm text-gray-900 dark:text-white">
                     {new Date(user.last_sign_in_at!).toLocaleString('en-US', {
                       year: 'numeric',
@@ -150,12 +132,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total Tasks
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                    0
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">0</p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                   <svg
@@ -183,12 +161,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Completed
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                    0
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">0</p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                   <svg
@@ -216,12 +190,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    In Progress
-                  </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                    0
-                  </p>
+                  <p className="text-sm font-medium text-muted-foreground">In Progress</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">0</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                   <svg
@@ -258,35 +228,73 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             <div className="space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-green-600 dark:text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Authentication Complete</p>
-                  <p className="text-sm text-muted-foreground">Email/password signup and login working with Supabase</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Authentication Complete
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Email/password signup and login working with Supabase
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-green-600 dark:text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">Protected Routes</p>
-                  <p className="text-sm text-muted-foreground">Middleware protecting dashboard from unauthorized access</p>
+                  <p className="text-sm text-muted-foreground">
+                    Middleware protecting dashboard from unauthorized access
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="w-4 h-4 text-green-600 dark:text-green-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">User Profile</p>
-                  <p className="text-sm text-muted-foreground">SSR session with user profile data displayed</p>
+                  <p className="text-sm text-muted-foreground">
+                    SSR session with user profile data displayed
+                  </p>
                 </div>
               </div>
             </div>
