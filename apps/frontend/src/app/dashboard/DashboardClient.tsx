@@ -1,22 +1,78 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import type { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
-import { ListTodo, Home, LayoutGrid, UserCircle } from 'lucide-react'
+import {
+  ListTodo,
+  Home,
+  LayoutGrid,
+  UserCircle,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  TrendingUp,
+  Calendar,
+  Target,
+  Zap,
+  ArrowRight,
+} from 'lucide-react'
 
 interface DashboardClientProps {
   user: User
 }
 
+interface TaskStats {
+  total: number
+  todo: number
+  in_progress: number
+  completed: number
+  overdue: number
+}
+
 export default function DashboardClient({ user }: DashboardClientProps) {
   const [loading, setLoading] = useState(false)
+  const [stats, setStats] = useState<TaskStats>({
+    total: 0,
+    todo: 0,
+    in_progress: 0,
+    completed: 0,
+    overdue: 0,
+  })
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    fetchTaskStats()
+  }, [])
+
+  const fetchTaskStats = async () => {
+    try {
+      const { data: tasks, error } = await supabase.from('tasks').select('*')
+
+      if (error) throw error
+
+      const now = new Date()
+      const newStats = {
+        total: tasks?.length || 0,
+        todo: tasks?.filter(t => t.status === 'todo').length || 0,
+        in_progress: tasks?.filter(t => t.status === 'in_progress').length || 0,
+        completed: tasks?.filter(t => t.status === 'completed').length || 0,
+        overdue:
+          tasks?.filter(
+            t => t.due_date && new Date(t.due_date) < now && t.status !== 'completed'
+          ).length || 0,
+      }
+      setStats(newStats)
+    } catch (error) {
+      console.error('Error fetching task stats:', error)
+    }
+  }
 
   const handleLogout = async () => {
     setLoading(true)
@@ -25,17 +81,70 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     router.refresh()
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 100,
+      },
+    },
+  }
+
+  const completionRate =
+    stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0
+
+  const quickActions = [
+    {
+      title: 'Create Task',
+      description: 'Add a new task to your list',
+      icon: Target,
+      href: '/tasks',
+      color: 'from-blue-500 to-blue-600',
+    },
+    {
+      title: 'View Kanban',
+      description: 'Organize tasks by status',
+      icon: LayoutGrid,
+      href: '/kanban',
+      color: 'from-purple-500 to-purple-600',
+    },
+    {
+      title: 'Update Profile',
+      description: 'Manage your account',
+      icon: UserCircle,
+      href: '/profile',
+      color: 'from-green-500 to-green-600',
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Navigation */}
-      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-6">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <motion.h1
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
+              >
                 Productivity Assistant
-              </h1>
-              <div className="hidden md:flex items-center gap-4">
+              </motion.h1>
+              <div className="hidden md:flex items-center gap-2">
                 <Link href="/dashboard">
                   <Button variant="ghost" size="sm">
                     <Home className="w-4 h-4 mr-2" />
@@ -72,260 +181,252 @@ export default function DashboardClient({ user }: DashboardClientProps) {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-8"
         >
-          {/* Welcome Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 mb-8">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white text-2xl font-bold">
-                  {user.user_metadata?.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Welcome back, {user.user_metadata?.name || 'User'}!
-                </h2>
-                <p className="text-muted-foreground mt-1">{user.email}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* User Profile Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 mb-8">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Profile Information
-            </h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">User ID</label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white font-mono">{user.id}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white">{user.email}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Name</label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                    {user.user_metadata?.name || 'Not set'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Account Created
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                    {new Date(user.created_at!).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Last Sign In</label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                    {new Date(user.last_sign_in_at!).toLocaleString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Email Confirmed
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900 dark:text-white">
-                    {user.email_confirmed_at ? '✅ Confirmed' : '❌ Not confirmed'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">0</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-blue-600 dark:text-blue-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+          {/* Welcome Hero */}
+          <motion.div variants={itemVariants}>
+            <Card className="border-none shadow-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24" />
+              <CardHeader className="relative z-10">
+                <div className="flex items-center gap-4">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+                    className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
+                    <span className="text-3xl font-bold">
+                      {user.user_metadata?.name?.[0]?.toUpperCase() ||
+                        user.email?.[0]?.toUpperCase()}
+                    </span>
+                  </motion.div>
+                  <div>
+                    <CardTitle className="text-3xl font-bold">
+                      Welcome back, {user.user_metadata?.name || user.email?.split('@')[0]}!
+                    </CardTitle>
+                    <CardDescription className="text-white/90 mt-1">
+                      {new Date().toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </CardDescription>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <div className="flex items-center gap-4">
+                  <Zap className="w-5 h-5" />
+                  <p className="text-white/90">
+                    You have {stats.total} total tasks • {stats.in_progress} in progress
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">0</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">In Progress</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">0</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-6 h-6 text-purple-600 dark:text-purple-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Getting Started */}
+          {/* Stats Grid */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 mt-8"
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-              🎉 Getting Started
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              Your authentication is set up! You can now start building your productivity features.
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg
-                    className="w-4 h-4 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+            <motion.div variants={itemVariants}>
+              <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                        {stats.total}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {completionRate}% completed
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <ListTodo className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">In Progress</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                        {stats.in_progress}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Currently working on</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Clock className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card className="border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                        {stats.completed}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Tasks finished</p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <CheckCircle2 className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <Card
+                className={`border-none shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 ${
+                  stats.overdue > 0 ? 'ring-2 ring-red-500' : ''
+                }`}
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Overdue</p>
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
+                        {stats.overdue}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {stats.overdue > 0 ? 'Need attention!' : 'All caught up!'}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <AlertCircle className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          {/* Quick Actions */}
+          <motion.div variants={itemVariants}>
+            <Card className="border-none shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5" />
+                  Quick Actions
+                </CardTitle>
+                <CardDescription>Jump to your most used features</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {quickActions.map((action, index) => (
+                    <motion.div
+                      key={action.title}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Link href={action.href}>
+                        <Card className="border-none shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
+                          <CardContent className="pt-6">
+                            <div
+                              className={`w-12 h-12 bg-gradient-to-br ${action.color} rounded-xl flex items-center justify-center mb-4 shadow-md group-hover:scale-110 transition-transform`}
+                            >
+                              <action.icon className="w-6 h-6 text-white" />
+                            </div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                              {action.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {action.description}
+                            </p>
+                            <div className="flex items-center text-sm font-medium text-blue-600 dark:text-blue-400">
+                              Go now
+                              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    </motion.div>
+                  ))}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Authentication Complete
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Email/password signup and login working with Supabase
-                  </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Progress Overview */}
+          <motion.div variants={itemVariants}>
+            <Card className="border-none shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Your Progress
+                </CardTitle>
+                <CardDescription>Overview of your productivity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Completion Rate</span>
+                      <span className="text-sm font-bold">{completionRate}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${completionRate}%` }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-full rounded-full"
+                      />
+                    </div>
+                  </div>
+
+                  {stats.total > 0 && (
+                    <div className="grid grid-cols-3 gap-4 pt-4">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-600">{stats.todo}</p>
+                        <p className="text-xs text-muted-foreground">To Do</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-purple-600">{stats.in_progress}</p>
+                        <p className="text-xs text-muted-foreground">In Progress</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                        <p className="text-xs text-muted-foreground">Completed</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {stats.total === 0 && (
+                    <div className="text-center py-8">
+                      <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        No tasks yet. Start by creating your first task!
+                      </p>
+                      <Link href="/tasks">
+                        <Button>
+                          <Target className="w-4 h-4 mr-2" />
+                          Create Task
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg
-                    className="w-4 h-4 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Protected Routes</p>
-                  <p className="text-sm text-muted-foreground">
-                    Middleware protecting dashboard from unauthorized access
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg
-                    className="w-4 h-4 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">User Profile</p>
-                  <p className="text-sm text-muted-foreground">
-                    SSR session with user profile data displayed
-                  </p>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </motion.div>
         </motion.div>
       </main>

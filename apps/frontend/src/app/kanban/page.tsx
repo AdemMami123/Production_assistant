@@ -259,8 +259,13 @@ export default function KanbanPage() {
       }
     }
 
-    // Update status in database if changed
+    // Update status in database AND local state if changed
     if (newStatus && activeTask.status !== newStatus) {
+      // Optimistically update local state immediately
+      setTasks(tasks =>
+        tasks.map(task => (task.id === activeId ? { ...task, status: newStatus } : task))
+      )
+
       try {
         const { error } = await supabase
           .from('tasks')
@@ -271,7 +276,7 @@ export default function KanbanPage() {
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error updating task status:', error)
-        // Revert optimistic update
+        // Revert optimistic update on error
         fetchTasks()
       }
     }
