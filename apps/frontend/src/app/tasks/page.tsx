@@ -94,7 +94,10 @@ export default function TasksPage() {
         return
       }
 
-      const { data, error } = await supabase.from('tasks').select('*').order('created_at', { ascending: false })
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .order('created_at', { ascending: false })
 
       if (error) throw error
 
@@ -167,9 +170,17 @@ export default function TasksPage() {
   // Create task
   const handleCreateTask = async (taskData: CreateTaskInput) => {
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        throw new Error('Not authenticated')
+      }
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert([taskData])
+        .insert([{ ...taskData, user_id: user.id }])
         .select()
         .single()
 
@@ -267,9 +278,7 @@ export default function TasksPage() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
             My Tasks
           </h1>
-          <p className="text-muted-foreground">
-            Manage your tasks efficiently and stay organized
-          </p>
+          <p className="text-muted-foreground">Manage your tasks efficiently and stay organized</p>
         </div>
 
         {/* Stats Cards */}
@@ -296,7 +305,9 @@ export default function TasksPage() {
               transition={{ delay: index * 0.1 }}
               className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm"
             >
-              <div className={`text-3xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+              <div
+                className={`text-3xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}
+              >
                 {stat.value}
               </div>
               <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 // Export task validation schemas
 export * from './task'
+export * from './profile'
 
 // User validation schemas
 export const UserSchema = z.object({

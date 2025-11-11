@@ -1,5 +1,6 @@
 // Export task types from separate file
 export * from './task'
+export * from './profile'
 
 // User types
 export interface User {

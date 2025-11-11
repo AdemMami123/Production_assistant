@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import type { User } from '@supabase/supabase-js'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
-import { ListTodo, Home } from 'lucide-react'
+import { ListTodo, Home, LayoutGrid, UserCircle } from 'lucide-react'
 
 interface DashboardClientProps {
   user: User
@@ -46,6 +46,18 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                   <Button variant="ghost" size="sm">
                     <ListTodo className="w-4 h-4 mr-2" />
                     Tasks
+                  </Button>
+                </Link>
+                <Link href="/kanban">
+                  <Button variant="ghost" size="sm">
+                    <LayoutGrid className="w-4 h-4 mr-2" />
+                    Kanban
+                  </Button>
+                </Link>
+                <Link href="/profile">
+                  <Button variant="ghost" size="sm">
+                    <UserCircle className="w-4 h-4 mr-2" />
+                    Profile
                   </Button>
                 </Link>
               </div>

@@ -177,7 +177,10 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
     }
   }
 
-  const handleChange = (field: keyof CreateTaskInput, value: string | TaskStatus | TaskPriority) => {
+  const handleChange = (
+    field: keyof CreateTaskInput,
+    value: string | TaskStatus | TaskPriority
+  ) => {
     setFormData((prev: CreateTaskInput) => ({ ...prev, [field]: value }))
     // Clear error for this field
     if (errors[field as string]) {
@@ -355,12 +358,7 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
 
             {/* Footer Actions */}
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={loading}
-              >
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
@@ -369,8 +367,10 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {mode === 'create' ? 'Creating...' : 'Saving...'}
                   </span>
+                ) : mode === 'create' ? (
+                  'Create Task'
                 ) : (
-                  mode === 'create' ? 'Create Task' : 'Save Changes'
+                  'Save Changes'
                 )}
               </Button>
             </DialogFooter>

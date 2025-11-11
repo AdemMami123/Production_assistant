@@ -45,7 +45,10 @@ const priorityColors: Record<TaskPriority, string> = {
   urgent: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
 }
 
-const statusConfig: Record<TaskStatus, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
+const statusConfig: Record<
+  TaskStatus,
+  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
+> = {
   todo: {
     label: 'To Do',
     icon: Clock,
@@ -70,7 +73,8 @@ const statusConfig: Record<TaskStatus, { label: string; icon: React.ComponentTyp
 
 export function TaskCard({ task, onEdit, onDelete, onStatusChange, index }: TaskCardProps) {
   const StatusIcon = statusConfig[task.status].icon
-  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed'
+  const isOverdue =
+    task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed'
 
   return (
     <motion.div
@@ -100,12 +104,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, index }: Task
 
             {/* Actions Dropdown */}
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => onEdit(task)}
-              >
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(task)}>
                 <Edit className="w-4 h-4" />
                 <span className="sr-only">Edit</span>
               </Button>
@@ -124,9 +123,7 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, index }: Task
 
         <CardContent className="flex-1 pb-3">
           {task.description && (
-            <CardDescription className="line-clamp-3 text-sm">
-              {task.description}
-            </CardDescription>
+            <CardDescription className="line-clamp-3 text-sm">{task.description}</CardDescription>
           )}
 
           <div className="flex flex-wrap gap-2 mt-3">
@@ -147,7 +144,9 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, index }: Task
         <CardFooter className="flex items-center justify-between pt-3 border-t">
           {/* Due Date */}
           {task.due_date ? (
-            <div className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
+            <div
+              className={`flex items-center gap-1 text-xs ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
+            >
               <Calendar className="w-3.5 h-3.5" />
               <span>
                 {isOverdue && 'Overdue: '}

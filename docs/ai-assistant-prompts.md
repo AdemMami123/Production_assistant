@@ -54,7 +54,7 @@ This guide provides stepwise Copilot-ready prompts to build a task management & 
 **Prompt:**
 "Connect frontend to Supabase Realtime API: receive updates for task changes and refresh list. Handle presence/broadcast."
 
-## 14. Calendar Integration
+## 14. Calendar Integration //to do later
 **Prompt:**
 "Integrate public Google Calendar API to fetch user events and display alongside tasks. Add button to sync task deadlines."
 
