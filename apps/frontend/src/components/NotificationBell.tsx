@@ -6,6 +6,7 @@ import { Bell, Check, X, Users, Calendar, MessageSquare, CheckCircle, Info } fro
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { apiUrl, authHeaders, parseJsonSafe } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import type { Notification } from '@productivity-assistant/shared'
 
 interface NotificationBellProps {
@@ -17,6 +18,7 @@ export default function NotificationBell({ onNotificationClick }: NotificationBe
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [loading, setLoading] = useState(false)
+  const { addToast } = useToast()
 
   useEffect(() => {
     fetchUnreadCount()
@@ -85,8 +87,18 @@ export default function NotificationBell({ onNotificationClick }: NotificationBe
       // Update local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
       setUnreadCount(prev => Math.max(0, prev - 1))
+      addToast({
+        type: 'success',
+        title: 'Notification marked as read',
+        duration: 2000,
+      })
     } catch (error) {
       console.error('Error marking notification as read:', error)
+      addToast({
+        type: 'error',
+        title: 'Failed to mark notification as read',
+        duration: 3000,
+      })
     }
   }
 
@@ -101,8 +113,18 @@ export default function NotificationBell({ onNotificationClick }: NotificationBe
 
       setNotifications([])
       setUnreadCount(0)
+      addToast({
+        type: 'success',
+        title: 'All notifications marked as read',
+        duration: 2000,
+      })
     } catch (error) {
       console.error('Error marking all as read:', error)
+      addToast({
+        type: 'error',
+        title: 'Failed to mark all as read',
+        duration: 3000,
+      })
     }
   }
 

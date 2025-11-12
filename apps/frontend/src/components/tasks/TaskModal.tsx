@@ -63,6 +63,7 @@ interface TaskModalProps {
   onSave: (task: CreateTaskInput | UpdateTaskInput) => Promise<void>
   task?: Task | null
   mode: 'create' | 'edit'
+  readOnly?: boolean
 }
 
 const statusOptions: { value: TaskStatus; label: string; color: string }[] = [
@@ -90,7 +91,14 @@ const categoryOptions = [
   'Other',
 ]
 
-export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProps) {
+export function TaskModal({
+  isOpen,
+  onClose,
+  onSave,
+  task,
+  mode,
+  readOnly = false,
+}: TaskModalProps) {
   const [formData, setFormData] = useState<CreateTaskInput>({
     title: '',
     description: '',
@@ -250,12 +258,14 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
         >
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold">
-              {mode === 'create' ? 'Create New Task' : 'Edit Task'}
+              {mode === 'create' ? 'Create New Task' : readOnly ? 'View Task' : 'Edit Task'}
             </DialogTitle>
             <DialogDescription>
               {mode === 'create'
                 ? 'Add a new task to your list. Fill in the details below.'
-                : 'Update the task details below.'}
+                : readOnly
+                  ? 'You can only update the task status. Full edit permissions are restricted to team leaders.'
+                  : 'Update the task details below.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -271,8 +281,8 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                 value={formData.title}
                 onChange={e => handleChange('title', e.target.value)}
                 className={errors.title ? 'border-destructive' : ''}
-                disabled={loading}
-                autoFocus
+                disabled={loading || readOnly}
+                autoFocus={!readOnly}
               />
               {errors.title && (
                 <motion.p
@@ -295,7 +305,7 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                 onChange={e => handleChange('description', e.target.value)}
                 className={errors.description ? 'border-destructive' : ''}
                 rows={4}
-                disabled={loading}
+                disabled={loading || readOnly}
               />
               {errors.description && (
                 <motion.p
@@ -340,7 +350,7 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                 <Select
                   value={formData.priority}
                   onValueChange={value => handleChange('priority', value as TaskPriority)}
-                  disabled={loading}
+                  disabled={loading || readOnly}
                 >
                   <SelectTrigger id="priority">
                     <SelectValue placeholder="Select priority" />
@@ -362,22 +372,24 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="category">Category</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleAICategorize}
-                    disabled={loading || aiLoading || !formData.title.trim()}
-                    className="h-6 gap-1 text-xs"
-                  >
-                    <Sparkles className={`w-3 h-3 ${aiLoading ? 'animate-pulse' : ''}`} />
-                    {aiLoading ? 'Analyzing...' : 'AI Suggest'}
-                  </Button>
+                  {!readOnly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleAICategorize}
+                      disabled={loading || aiLoading || !formData.title.trim()}
+                      className="h-6 gap-1 text-xs"
+                    >
+                      <Sparkles className={`w-3 h-3 ${aiLoading ? 'animate-pulse' : ''}`} />
+                      {aiLoading ? 'Analyzing...' : 'AI Suggest'}
+                    </Button>
+                  )}
                 </div>
                 <Select
                   value={formData.category}
                   onValueChange={value => handleChange('category', value)}
-                  disabled={loading}
+                  disabled={loading || readOnly}
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
@@ -409,7 +421,7 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                   type="datetime-local"
                   value={formData.due_date}
                   onChange={e => handleChange('due_date', e.target.value)}
-                  disabled={loading}
+                  disabled={loading || readOnly}
                 />
               </div>
             </div>
@@ -438,6 +450,8 @@ export function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                   </span>
                 ) : mode === 'create' ? (
                   'Create Task'
+                ) : readOnly ? (
+                  'Update Status'
                 ) : (
                   'Save Changes'
                 )}

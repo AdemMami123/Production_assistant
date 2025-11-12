@@ -9,9 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { apiUrl, parseJsonSafe, authHeaders } from '@/lib/api'
-import EnvironmentSwitcher from '@/components/EnvironmentSwitcher'
 import { useEnvironment } from '@/components/EnvironmentProvider'
-import NotificationBell from '@/components/NotificationBell'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
 import {
   ListTodo,
   Home,
@@ -52,7 +51,8 @@ export default function DashboardClient({ user }: DashboardClientProps) {
   })
   const router = useRouter()
   const supabase = createClient()
-  const { mode, selectedTeamId, teams, setMode, setTeams } = useEnvironment()
+  const { teams, setTeams } = useEnvironment()
+  const { workspace, teamId } = useWorkspace()
 
   const fetchTeams = useCallback(async () => {
     try {
@@ -83,11 +83,11 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     try {
       let query = supabase.from('tasks').select('*')
 
-      // Filter based on environment mode
-      if (mode === 'personal') {
+      // Filter based on workspace
+      if (workspace === 'personal') {
         query = query.is('team_id', null)
-      } else if (mode === 'work' && selectedTeamId) {
-        query = query.eq('team_id', selectedTeamId)
+      } else if (workspace === 'team' && teamId) {
+        query = query.eq('team_id', teamId)
       }
 
       const { data: tasks, error } = await query
@@ -108,21 +108,19 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     } catch (error) {
       console.error('Error fetching task stats:', error)
     }
-  }, [mode, selectedTeamId, supabase])
+  }, [workspace, teamId, supabase])
 
   // Fetch teams on mount
   useEffect(() => {
     fetchTeams()
   }, [fetchTeams])
 
-  // Refresh stats when environment changes
+  // Refresh stats when workspace changes
   useEffect(() => {
     fetchTaskStats()
-  }, [fetchTaskStats])
+  }, [fetchTaskStats, workspace, teamId])
 
-  const handleEnvironmentChange = (newMode: 'personal' | 'work', teamId?: string) => {
-    setMode(newMode, teamId)
-  }
+  // Workspace switching is handled by `WorkspaceSwitcher` and `WorkspaceContext`
 
   const handleLogout = async () => {
     setLoading(true)
@@ -203,80 +201,15 @@ export default function DashboardClient({ user }: DashboardClientProps) {
     },
   ]
 
-  const quickActions = mode === 'personal' ? personalQuickActions : workQuickActions
+  const quickActions = workspace === 'personal' ? personalQuickActions : workQuickActions
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Navigation */}
-      <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-6">
-              <motion.h1
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
-              >
-                Productivity Assistant
-              </motion.h1>
-
-              {/* Environment Switcher */}
-              <EnvironmentSwitcher
-                currentMode={mode}
-                teams={teams}
-                selectedTeamId={selectedTeamId}
-                onModeChange={handleEnvironmentChange}
-                onTeamCreated={fetchTeams}
-              />
-
-              <div className="hidden md:flex items-center gap-2">
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">
-                    <Home className="w-4 h-4 mr-2" />
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link href="/tasks">
-                  <Button variant="ghost" size="sm">
-                    <ListTodo className="w-4 h-4 mr-2" />
-                    Tasks
-                  </Button>
-                </Link>
-                <Link href="/kanban">
-                  <Button variant="ghost" size="sm">
-                    <LayoutGrid className="w-4 h-4 mr-2" />
-                    Kanban
-                  </Button>
-                </Link>
-                <Link href="/teams">
-                  <Button variant="ghost" size="sm">
-                    <Users className="w-4 h-4 mr-2" />
-                    Teams
-                  </Button>
-                </Link>
-                <Link href="/profile">
-                  <Button variant="ghost" size="sm">
-                    <UserCircle className="w-4 h-4 mr-2" />
-                    Profile
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <NotificationBell />
-              <Button variant="outline" onClick={handleLogout} disabled={loading}>
-                {loading ? 'Logging out...' : 'Logout'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           <motion.div
-            key={mode + selectedTeamId}
+            key={workspace + teamId}
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -288,7 +221,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
             <motion.div variants={itemVariants}>
               <Card
                 className={`border-none shadow-xl ${
-                  mode === 'personal'
+                  workspace === 'personal'
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600'
                     : 'bg-gradient-to-r from-purple-600 to-pink-600'
                 } text-white overflow-hidden relative`}
@@ -310,9 +243,9 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                     </motion.div>
                     <div>
                       <CardTitle className="text-3xl font-bold">
-                        {mode === 'personal'
+                        {workspace === 'personal'
                           ? `Welcome back, ${user.user_metadata?.name || user.email?.split('@')[0]}!`
-                          : `${teams.find(t => t.id === selectedTeamId)?.name || 'Team'} Dashboard`}
+                          : `${teams.find(t => t.id === teamId)?.name || 'Team'} Dashboard`}
                       </CardTitle>
                       <CardDescription className="text-white/90 mt-1">
                         {new Date().toLocaleDateString('en-US', {
@@ -320,7 +253,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                           month: 'long',
                           day: 'numeric',
                         })}
-                        {mode === 'work' && ' • Work Mode'}
+                        {workspace === 'team' && ' • Work Mode'}
                       </CardDescription>
                     </div>
                   </div>
@@ -329,7 +262,7 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                   <div className="flex items-center gap-4">
                     <Zap className="w-5 h-5" />
                     <p className="text-white/90">
-                      {mode === 'personal'
+                      {workspace === 'personal'
                         ? `You have ${stats.total} total tasks • ${stats.in_progress} in progress`
                         : `Team has ${stats.total} total tasks • ${stats.in_progress} in progress`}
                     </p>

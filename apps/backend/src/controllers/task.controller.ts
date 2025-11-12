@@ -17,8 +17,10 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
- * GET /tasks
- * Get all tasks for the authenticated user with optional filters
+ * GET /tasks?workspace=personal|team&team_id=xxx
+ * Get all tasks for the authenticated user with workspace context
+ * Personal workspace: user's private tasks only
+ * Team workspace: team tasks filtered by team_id and user membership
  */
 export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -29,9 +31,43 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
 
     // Validate and parse query parameters
     const filters = taskQuerySchema.parse(req.query)
+    const workspace = (req.query.workspace as string) || 'personal'
+    const teamId = req.query.team_id as string
 
-    // Build query
-    let query = supabase.from('tasks').select('*', { count: 'exact' }).eq('user_id', userId)
+    // Build base query with count
+    let query = supabase.from('tasks').select('*', { count: 'exact' })
+
+    // Apply workspace filtering
+    if (workspace === 'personal') {
+      // Personal workspace: only user's own tasks with team_id NULL
+      query = query.eq('user_id', userId).is('team_id', null)
+    } else if (workspace === 'team') {
+      // Team workspace: require team_id and verify membership
+      if (!teamId) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'team_id is required for team workspace' })
+      }
+
+      // Verify user is a team member
+      const { data: membership, error: memberError } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', teamId)
+        .eq('user_id', userId)
+        .single()
+
+      if (memberError || !membership) {
+        return res.status(403).json({ success: false, error: 'Not a team member' })
+      }
+
+      // Filter for team tasks only
+      query = query.eq('team_id', teamId)
+    } else {
+      return res
+        .status(400)
+        .json({ success: false, error: 'Invalid workspace parameter. Use "personal" or "team"' })
+    }
 
     // Apply filters
     if (filters.status) {
@@ -80,6 +116,7 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
         offset: filters.offset,
         hasMore: (count || 0) > filters.offset + filters.limit,
       },
+      workspace,
     })
   } catch (error: any) {
     console.error('Error in getTasks:', error)
@@ -94,7 +131,7 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * GET /tasks/:id
- * Get a specific task by ID
+ * Get a specific task by ID with workspace awareness
  */
 export const getTaskById = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -105,12 +142,8 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response) => {
 
     const { id } = taskIdSchema.parse(req.params)
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', userId)
-      .single()
+    // Fetch task first to determine workspace
+    const { data, error } = await supabase.from('tasks').select('*').eq('id', id).single()
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -118,6 +151,26 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response) => {
       }
       console.error('Error fetching task:', error)
       return res.status(500).json({ success: false, error: 'Failed to fetch task' })
+    }
+
+    // Check permissions based on workspace
+    if (data.team_id === null) {
+      // Personal task - must be owner
+      if (data.user_id !== userId) {
+        return res.status(403).json({ success: false, error: 'Access denied' })
+      }
+    } else {
+      // Team task - must be team member
+      const { data: membership, error: memberError } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', data.team_id)
+        .eq('user_id', userId)
+        .single()
+
+      if (memberError || !membership) {
+        return res.status(403).json({ success: false, error: 'Not a team member' })
+      }
     }
 
     return res.json({ success: true, data })
@@ -134,7 +187,9 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * POST /tasks
- * Create a new task
+ * Create a new task in personal or team workspace
+ * Personal tasks: any authenticated user
+ * Team tasks: only team leaders can create
  */
 export const createTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -145,6 +200,51 @@ export const createTask = async (req: AuthenticatedRequest, res: Response) => {
 
     // Validate request body
     const taskData = createTaskSchema.parse(req.body)
+    const teamId = (req.body as any).team_id
+    const assignedTo = (req.body as any).assigned_to
+
+    // If creating a team task, verify user is team leader
+    if (teamId) {
+      const { data: membership, error: memberError } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', teamId)
+        .eq('user_id', userId)
+        .single()
+
+      if (memberError || !membership) {
+        return res.status(403).json({ success: false, error: 'Not a team member' })
+      }
+
+      if (membership.role !== 'leader') {
+        return res
+          .status(403)
+          .json({ success: false, error: 'Only team leaders can create team tasks' })
+      }
+
+      // For team tasks, verify assigned_to is a team member if provided
+      if (assignedTo) {
+        const { data: assignedMember, error: assignedError } = await supabase
+          .from('team_members')
+          .select('user_id')
+          .eq('team_id', teamId)
+          .eq('user_id', assignedTo)
+          .single()
+
+        if (assignedError || !assignedMember) {
+          return res
+            .status(400)
+            .json({ success: false, error: 'Assigned user is not a team member' })
+        }
+      }
+    } else {
+      // Personal task - team_id should be null and no assigned_to
+      if (assignedTo) {
+        return res
+          .status(400)
+          .json({ success: false, error: 'Personal tasks cannot be assigned to others' })
+      }
+    }
 
     // Create task
     const { data, error } = await supabase
@@ -152,6 +252,9 @@ export const createTask = async (req: AuthenticatedRequest, res: Response) => {
       .insert({
         ...taskData,
         user_id: userId,
+        team_id: teamId || null,
+        assigned_to: assignedTo || null,
+        assigned_by: teamId && assignedTo ? userId : null,
       })
       .select()
       .single()
@@ -175,7 +278,9 @@ export const createTask = async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * PUT /tasks/:id
- * Update an existing task
+ * Update an existing task with role-based permissions
+ * Personal tasks: owner has full edit
+ * Team tasks: leader has full edit, members can ONLY update status (for kanban)
  */
 export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -187,16 +292,50 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = taskIdSchema.parse(req.params)
     const updates = updateTaskSchema.parse(req.body)
 
-    // Check if task exists and belongs to user
+    // Fetch existing task to check workspace and permissions
     const { data: existingTask, error: fetchError } = await supabase
       .from('tasks')
-      .select('id')
+      .select('*')
       .eq('id', id)
-      .eq('user_id', userId)
       .single()
 
     if (fetchError || !existingTask) {
       return res.status(404).json({ success: false, error: 'Task not found' })
+    }
+
+    // Permission checks based on workspace
+    if (existingTask.team_id === null) {
+      // Personal task - must be owner
+      if (existingTask.user_id !== userId) {
+        return res.status(403).json({ success: false, error: 'Access denied' })
+      }
+    } else {
+      // Team task - check role
+      const { data: membership, error: memberError } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', existingTask.team_id)
+        .eq('user_id', userId)
+        .single()
+
+      if (memberError || !membership) {
+        return res.status(403).json({ success: false, error: 'Not a team member' })
+      }
+
+      // Team members (non-leaders) can ONLY update status (for kanban board)
+      if (membership.role !== 'leader') {
+        const allowedKeys = ['status']
+        const updateKeys = Object.keys(updates)
+        const hasDisallowedKeys = updateKeys.some(key => !allowedKeys.includes(key))
+
+        if (hasDisallowedKeys) {
+          return res.status(403).json({
+            success: false,
+            error:
+              'Team members can only update task status. Full edit permissions are restricted to team leaders.',
+          })
+        }
+      }
     }
 
     // Update task
@@ -204,7 +343,6 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
       .from('tasks')
       .update(updates)
       .eq('id', id)
-      .eq('user_id', userId)
       .select()
       .single()
 
@@ -227,7 +365,9 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
 
 /**
  * DELETE /tasks/:id
- * Delete a task
+ * Delete a task with role-based permissions
+ * Personal tasks: owner can delete
+ * Team tasks: ONLY team leaders can delete (members have NO delete permission)
  */
 export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -238,8 +378,45 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
 
     const { id } = taskIdSchema.parse(req.params)
 
+    // Fetch task to check workspace and permissions
+    const { data: existingTask, error: fetchError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !existingTask) {
+      return res.status(404).json({ success: false, error: 'Task not found' })
+    }
+
+    // Permission checks
+    if (existingTask.team_id === null) {
+      // Personal task - must be owner
+      if (existingTask.user_id !== userId) {
+        return res.status(403).json({ success: false, error: 'Access denied' })
+      }
+    } else {
+      // Team task - must be team leader
+      const { data: membership, error: memberError } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', existingTask.team_id)
+        .eq('user_id', userId)
+        .single()
+
+      if (memberError || !membership) {
+        return res.status(403).json({ success: false, error: 'Not a team member' })
+      }
+
+      if (membership.role !== 'leader') {
+        return res
+          .status(403)
+          .json({ success: false, error: 'Only team leaders can delete team tasks' })
+      }
+    }
+
     // Delete task
-    const { error } = await supabase.from('tasks').delete().eq('id', id).eq('user_id', userId)
+    const { error } = await supabase.from('tasks').delete().eq('id', id)
 
     if (error) {
       console.error('Error deleting task:', error)

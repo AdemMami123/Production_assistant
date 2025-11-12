@@ -15,6 +15,8 @@ import {
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { TaskModal } from '@/components/tasks/TaskModal'
 import { createClient } from '@/lib/supabase/client'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { apiUrl, authHeaders, parseJsonSafe } from '@/lib/api'
 
 type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'archived'
 type TaskPriority = 'low' | 'medium' | 'high' | 'urgent'
@@ -80,35 +82,39 @@ export default function TasksPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const supabase = createClient()
+  const { workspace, teamId, canCreateTasks, canEditTasks, canDeleteTasks } = useWorkspace()
 
   // Fetch tasks
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
 
-      if (!user) {
-        console.error('No user found')
-        return
+      // Build URL with workspace parameters
+      let url = '/api/tasks?workspace=' + workspace
+      if (workspace === 'team' && teamId) {
+        url += '&team_id=' + teamId
       }
 
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(url), {
+        credentials: 'include',
+        headers: { ...extra },
+      })
 
-      if (error) throw error
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to fetch tasks')
+      }
 
-      setTasks(data || [])
-      calculateStats(data || [])
+      const data = parsed.json?.data || []
+      setTasks(data)
+      calculateStats(data)
     } catch (error) {
       console.error('Error fetching tasks:', error)
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [workspace, teamId])
 
   // Calculate statistics
   const calculateStats = (taskList: Task[]) => {
@@ -153,10 +159,10 @@ export default function TasksPage() {
     setFilteredTasks(filtered)
   }, [tasks, statusFilter, priorityFilter, searchQuery])
 
-  // Initial load
+  // Initial load and workspace change
   useEffect(() => {
     fetchTasks()
-  }, [fetchTasks])
+  }, [fetchTasks, workspace, teamId])
 
   // Create or Update task
   const handleSaveTask = async (taskData: CreateTaskInput | UpdateTaskInput) => {
@@ -170,24 +176,29 @@ export default function TasksPage() {
   // Create task
   const handleCreateTask = async (taskData: CreateTaskInput) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error('Not authenticated')
+      const payload: any = { ...taskData }
+      if (workspace === 'team' && teamId) {
+        payload.team_id = teamId
       }
 
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert([{ ...taskData, user_id: user.id }])
-        .select()
-        .single()
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl('/api/tasks'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...extra,
+        },
+        body: JSON.stringify(payload),
+      })
 
-      if (error) throw error
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to create task')
+      }
 
-      setTasks(prev => [data, ...prev])
-      calculateStats([data, ...tasks])
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       console.error('Error creating task:', error)
       throw error
@@ -199,17 +210,24 @@ export default function TasksPage() {
     if (!selectedTask) return
 
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update(taskData)
-        .eq('id', selectedTask.id)
-        .select()
-        .single()
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(`/api/tasks/${selectedTask.id}`), {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...extra,
+        },
+        body: JSON.stringify(taskData),
+      })
 
-      if (error) throw error
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to update task')
+      }
 
-      setTasks(prev => prev.map(t => (t.id === selectedTask.id ? data : t)))
-      calculateStats(tasks.map(t => (t.id === selectedTask.id ? data : t)))
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       console.error('Error updating task:', error)
       throw error
@@ -221,12 +239,20 @@ export default function TasksPage() {
     if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
-      const { error } = await supabase.from('tasks').delete().eq('id', id)
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(`/api/tasks/${id}`), {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { ...extra },
+      })
 
-      if (error) throw error
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to delete task')
+      }
 
-      setTasks(prev => prev.filter(t => t.id !== id))
-      calculateStats(tasks.filter(t => t.id !== id))
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       console.error('Error deleting task:', error)
     }
@@ -235,17 +261,24 @@ export default function TasksPage() {
   // Change task status
   const handleStatusChange = async (id: string, status: TaskStatus) => {
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update({ status })
-        .eq('id', id)
-        .select()
-        .single()
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(`/api/tasks/${id}`), {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...extra,
+        },
+        body: JSON.stringify({ status }),
+      })
 
-      if (error) throw error
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to update task status')
+      }
 
-      setTasks(prev => prev.map(t => (t.id === id ? data : t)))
-      calculateStats(tasks.map(t => (t.id === id ? data : t)))
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       console.error('Error updating task status:', error)
     }
@@ -378,10 +411,12 @@ export default function TasksPage() {
             </div>
 
             {/* Create Button */}
-            <Button onClick={openCreateModal} className="w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
-              New Task
-            </Button>
+            {canCreateTasks() && (
+              <Button onClick={openCreateModal} className="w-full sm:w-auto">
+                <Plus className="w-4 h-4 mr-2" />
+                New Task
+              </Button>
+            )}
           </div>
         </div>
 
@@ -424,8 +459,8 @@ export default function TasksPage() {
                 <TaskCard
                   key={task.id}
                   task={task}
-                  onEdit={openEditModal}
-                  onDelete={handleDeleteTask}
+                  onEdit={canEditTasks() ? openEditModal : undefined}
+                  onDelete={canDeleteTasks() ? handleDeleteTask : undefined}
                   onStatusChange={handleStatusChange}
                   index={index}
                 />
@@ -442,6 +477,7 @@ export default function TasksPage() {
         onSave={handleSaveTask}
         task={selectedTask}
         mode={modalMode}
+        readOnly={!canEditTasks() && modalMode === 'edit'}
       />
     </div>
   )

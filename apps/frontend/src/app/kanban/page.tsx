@@ -22,6 +22,9 @@ import { KanbanColumn } from '@/components/kanban/KanbanColumn'
 import { KanbanCard } from '@/components/kanban/KanbanCard'
 import { TaskModal } from '@/components/tasks/TaskModal'
 import { createClient } from '@/lib/supabase/client'
+import { useWorkspace } from '@/contexts/WorkspaceContext'
+import { apiUrl, authHeaders, parseJsonSafe } from '@/lib/api'
+import { useToast } from '@/contexts/ToastContext'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'archived'
@@ -75,10 +78,12 @@ export default function KanbanPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus>('todo')
+  const { addToast } = useToast()
   const [onlineUsers, setOnlineUsers] = useState<number>(0)
 
   const supabase = createClient()
   const [_channel, setChannel] = useState<RealtimeChannel | null>(null)
+  const { workspace, teamId, canCreateTasks, canEditTasks } = useWorkspace()
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -96,34 +101,40 @@ export default function KanbanPage() {
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
 
-      if (!user) {
-        console.error('No user found')
-        return
+      // Build URL with workspace parameters
+      let url = '/api/tasks?workspace=' + workspace
+      if (workspace === 'team' && teamId) {
+        url += '&team_id=' + teamId
       }
 
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(url), {
+        credentials: 'include',
+        headers: { ...extra },
+      })
 
-      if (error) throw error
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to fetch tasks')
+      }
 
-      setTasks(data || [])
+      const data = parsed.json?.data || []
+      setTasks(data)
     } catch (error) {
       console.error('Error fetching tasks:', error)
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [workspace, teamId])
 
   // Setup Realtime subscriptions
   useEffect(() => {
     fetchTasks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspace, teamId])
 
+  useEffect(() => {
     // Subscribe to task changes
     const tasksChannel = supabase
       .channel('tasks-channel')
@@ -278,28 +289,20 @@ export default function KanbanPage() {
     // Update status in database if changed (compare with original status)
     if (newStatus && originalTaskStatus && originalTaskStatus !== newStatus) {
       try {
-        // Get current user
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+        const extra = await authHeaders()
+        const response = await fetch(apiUrl(`/api/tasks/${activeId}`), {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...extra,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        })
 
-        if (!user) {
-          throw new Error('Not authenticated')
-        }
-
-        // Update task status in database
-        const { error } = await supabase
-          .from('tasks')
-          .update({
-            status: newStatus,
-          })
-          .eq('id', activeId)
-          .eq('user_id', user.id)
-
-        if (error) {
-          // eslint-disable-next-line no-console
-          console.error('Database error updating task:', error)
-          throw error
+        const parsed = await parseJsonSafe(response)
+        if (!response.ok) {
+          throw new Error(parsed.json?.error || 'Failed to update task status')
         }
 
         // eslint-disable-next-line no-console
@@ -324,21 +327,29 @@ export default function KanbanPage() {
   // CRUD operations
   const handleCreateTask = async (taskData: CreateTaskInput) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error('Not authenticated')
+      const payload: any = { ...taskData, status: defaultStatus }
+      if (workspace === 'team' && teamId) {
+        payload.team_id = teamId
       }
 
-      await supabase
-        .from('tasks')
-        .insert([{ ...taskData, status: defaultStatus, user_id: user.id }])
-        .select()
-        .single()
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl('/api/tasks'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...extra,
+        },
+        body: JSON.stringify(payload),
+      })
 
-      // Realtime will handle adding the task to the list
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to create task')
+      }
+
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error creating task:', error)
@@ -350,9 +361,24 @@ export default function KanbanPage() {
     if (!selectedTask) return
 
     try {
-      await supabase.from('tasks').update(taskData).eq('id', selectedTask.id).select().single()
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(`/api/tasks/${selectedTask.id}`), {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...extra,
+        },
+        body: JSON.stringify(taskData),
+      })
 
-      // Realtime will handle updating the task
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to update task')
+      }
+
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error updating task:', error)
@@ -372,9 +398,20 @@ export default function KanbanPage() {
     if (!confirm('Are you sure you want to delete this task?')) return
 
     try {
-      await supabase.from('tasks').delete().eq('id', id)
+      const extra = await authHeaders()
+      const response = await fetch(apiUrl(`/api/tasks/${id}`), {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { ...extra },
+      })
 
-      // Realtime will handle removing the task
+      const parsed = await parseJsonSafe(response)
+      if (!response.ok) {
+        throw new Error(parsed.json?.error || 'Failed to delete task')
+      }
+
+      // Refresh tasks
+      await fetchTasks()
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error deleting task:', error)
@@ -442,13 +479,23 @@ export default function KanbanPage() {
         // Refresh tasks
         await fetchTasks()
 
-        // Show success message
+        // Show success message via toast (addToast is called from top-level hook)
         console.log('AI Prioritization summary:', result.summary)
-        alert(`Tasks prioritized!\n\n${result.summary}`)
+        addToast({
+          type: 'success',
+          title: 'Tasks prioritized!',
+          message: result.summary,
+          duration: 5000,
+        })
       }
     } catch (error) {
       console.error('Error with AI prioritization:', error)
-      alert('Failed to prioritize tasks with AI. Please try again.')
+      addToast({
+        type: 'error',
+        title: 'AI prioritization failed',
+        message: 'Failed to prioritize tasks with AI. Please try again.',
+        duration: 4000,
+      })
     } finally {
       setAiLoading(false)
     }
@@ -516,9 +563,9 @@ export default function KanbanPage() {
                   key={column.id}
                   column={column}
                   tasks={tasksByStatus[column.id]}
-                  onAddTask={() => openCreateModal(column.id)}
-                  onEditTask={openEditModal}
-                  onDeleteTask={handleDeleteTask}
+                  onAddTask={canCreateTasks() ? () => openCreateModal(column.id) : undefined}
+                  onEditTask={canEditTasks() ? openEditModal : undefined}
+                  onDeleteTask={canEditTasks() ? handleDeleteTask : undefined}
                 />
               ))}
             </div>
@@ -542,6 +589,7 @@ export default function KanbanPage() {
         onSave={handleSaveTask}
         task={selectedTask}
         mode={modalMode}
+        readOnly={!canEditTasks() && modalMode === 'edit'}
       />
     </div>
   )

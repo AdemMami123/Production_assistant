@@ -2,6 +2,10 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 import { EnvironmentProvider } from '@/components/EnvironmentProvider'
+import { WorkspaceProvider } from '@/contexts/WorkspaceContext'
+import { ToastProvider } from '@/contexts/ToastContext'
+import { ToastContainer } from '@/components/ToastContainer'
+import Header from '@/components/Header'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,7 +18,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <EnvironmentProvider>{children}</EnvironmentProvider>
+        <EnvironmentProvider>
+          <WorkspaceProvider>
+            <ToastProvider>
+              <Header />
+              {children}
+              <ToastContainer />
+            </ToastProvider>
+          </WorkspaceProvider>
+        </EnvironmentProvider>
       </body>
     </html>
   )
