@@ -5,7 +5,7 @@ import { EnvironmentProvider } from '@/components/EnvironmentProvider'
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext'
 import { ToastProvider } from '@/contexts/ToastContext'
 import { ToastContainer } from '@/components/ToastContainer'
-import Header from '@/components/Header'
+import { ConditionalHeader } from '@/components/ConditionalHeader'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <EnvironmentProvider>
           <WorkspaceProvider>
             <ToastProvider>
-              <Header />
+              <ConditionalHeader />
               {children}
               <ToastContainer />
             </ToastProvider>
