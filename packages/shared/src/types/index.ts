@@ -7,6 +7,7 @@ export * from './meeting'
 export * from './comment'
 export * from './progress'
 export * from './environment'
+export * from './notification'
 
 // User types
 export interface User {

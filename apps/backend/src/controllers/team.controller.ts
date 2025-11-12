@@ -1,5 +1,7 @@
 import { Request, Response } from 'express'
 import { supabase } from '../config/supabase'
+import { sendTeamInvitationEmail } from '../lib/email'
+import { createNotification } from './notification.controller'
 import type {
   Team,
   CreateTeamInput,
@@ -104,17 +106,7 @@ export const getTeamById = async (req: AuthenticatedRequest, res: Response) => {
     // Get team members with profiles
     const { data: members, error: membersError } = await supabase
       .from('team_members')
-      .select(
-        `
-        *,
-        user:user_id (
-          id,
-          email:email,
-          full_name:profiles(full_name),
-          avatar_url:profiles(avatar_url)
-        )
-      `
-      )
+      .select('*')
       .eq('team_id', id)
 
     if (membersError) {
@@ -122,12 +114,38 @@ export const getTeamById = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(500).json({ success: false, error: 'Failed to fetch team members' })
     }
 
-    const teamWithMembers: TeamWithMembers = {
-      ...team,
-      members: members || [],
-      member_count: members?.length || 0,
+    // Load profiles for the member user_ids and merge
+    const userIds = (members || []).map((m: any) => m.user_id)
+    let profiles: any[] = []
+    if (userIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .in('id', userIds)
+
+      if (profilesError) {
+        console.error('Error fetching member profiles:', profilesError)
+        return res.status(500).json({ success: false, error: 'Failed to fetch member profiles' })
+      }
+
+      profiles = profilesData || []
     }
 
+    const membersWithProfiles = (members || []).map((m: any) => {
+      const profile = profiles.find(p => p.id === m.user_id) || {
+        id: m.user_id,
+        email: null,
+        full_name: null,
+        avatar_url: null,
+      }
+      return { ...m, profiles: profile }
+    })
+
+    const teamWithMembers: TeamWithMembers = {
+      ...team,
+      members: membersWithProfiles,
+      member_count: membersWithProfiles.length,
+    }
     return res.json({ success: true, data: teamWithMembers })
   } catch (error) {
     console.error('Error in getTeamById:', error)
@@ -165,6 +183,24 @@ export const createTeam = async (req: AuthenticatedRequest, res: Response) => {
     if (error) {
       console.error('Error creating team:', error)
       return res.status(500).json({ success: false, error: 'Failed to create team' })
+    }
+
+    // Add the creator as a team member with role 'leader'
+    try {
+      const { error: addCreatorErr } = await supabase.from('team_members').insert({
+        team_id: team.id,
+        user_id: userId,
+        role: 'leader',
+      })
+
+      if (addCreatorErr) {
+        // If the creator is already a member (unique constraint) ignore, otherwise log
+        if (addCreatorErr.code !== '23505') {
+          console.warn('Warning: could not add creator to team_members:', addCreatorErr)
+        }
+      }
+    } catch (e) {
+      console.warn('Unexpected error adding creator as team member:', e)
     }
 
     return res.status(201).json({ success: true, data: team })
@@ -288,20 +324,10 @@ export const getTeamMembers = async (req: AuthenticatedRequest, res: Response) =
       return res.status(403).json({ success: false, error: 'Not a team member' })
     }
 
-    // Get team members with profiles
+    // Get team members (simple select)
     const { data: members, error } = await supabase
       .from('team_members')
-      .select(
-        `
-        *,
-        profiles!inner (
-          id,
-          email,
-          full_name,
-          avatar_url
-        )
-      `
-      )
+      .select('*')
       .eq('team_id', id)
 
     if (error) {
@@ -309,7 +335,34 @@ export const getTeamMembers = async (req: AuthenticatedRequest, res: Response) =
       return res.status(500).json({ success: false, error: 'Failed to fetch team members' })
     }
 
-    return res.json({ success: true, data: members })
+    // Fetch profiles for those members and merge
+    const userIds = (members || []).map((m: any) => m.user_id)
+    let profiles: any[] = []
+    if (userIds.length > 0) {
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .in('id', userIds)
+
+      if (profilesError) {
+        console.error('Error fetching member profiles:', profilesError)
+        return res.status(500).json({ success: false, error: 'Failed to fetch member profiles' })
+      }
+
+      profiles = profilesData || []
+    }
+
+    const membersWithProfiles = (members || []).map((m: any) => {
+      const profile = profiles.find(p => p.id === m.user_id) || {
+        id: m.user_id,
+        email: null,
+        full_name: null,
+        avatar_url: null,
+      }
+      return { ...m, profiles: profile }
+    })
+
+    return res.json({ success: true, data: membersWithProfiles })
   } catch (error) {
     console.error('Error in getTeamMembers:', error)
     return res.status(500).json({ success: false, error: 'Internal server error' })
@@ -319,6 +372,7 @@ export const getTeamMembers = async (req: AuthenticatedRequest, res: Response) =
 /**
  * POST /teams/:id/members
  * Add a member to a team (leaders only)
+ * Sends both in-app notification and email
  */
 export const addTeamMember = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -327,6 +381,17 @@ export const addTeamMember = async (req: AuthenticatedRequest, res: Response) =>
 
     if (!userId) {
       return res.status(401).json({ success: false, error: 'Unauthorized' })
+    }
+
+    // Get team details
+    const { data: team, error: teamError } = await supabase
+      .from('teams')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (teamError || !team) {
+      return res.status(404).json({ success: false, error: 'Team not found' })
     }
 
     // Check if user is a team leader
@@ -347,6 +412,27 @@ export const addTeamMember = async (req: AuthenticatedRequest, res: Response) =>
       return res.status(400).json({ success: false, error: 'User ID is required' })
     }
 
+    // Get inviter profile
+    const { data: inviterProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', userId)
+      .single()
+
+    // Get invited user profile
+    const { data: invitedUserProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', input.user_id)
+      .single()
+
+    // Get invited user email from auth.users if not in profile
+    let invitedUserEmail = invitedUserProfile?.email
+    if (!invitedUserEmail) {
+      const { data: authUser } = await supabase.auth.admin.getUserById(input.user_id)
+      invitedUserEmail = authUser?.user?.email
+    }
+
     const { data: member, error } = await supabase
       .from('team_members')
       .insert({
@@ -363,6 +449,39 @@ export const addTeamMember = async (req: AuthenticatedRequest, res: Response) =>
         return res.status(409).json({ success: false, error: 'User is already a team member' })
       }
       return res.status(500).json({ success: false, error: 'Failed to add team member' })
+    }
+
+    // Create in-app notification
+    const inviterName = inviterProfile?.full_name || req.user?.email || 'A team member'
+    const invitedUserName = invitedUserProfile?.full_name || invitedUserEmail || 'User'
+    const roleText = input.role === 'leader' ? 'leader' : 'member'
+
+    await createNotification({
+      user_id: input.user_id,
+      type: 'team_invitation',
+      title: `You've been invited to ${team.name}!`,
+      message: `${inviterName} has invited you to join ${team.name} as a ${roleText}.`,
+      data: {
+        team_id: id,
+        team_name: team.name,
+        inviter_id: userId,
+        inviter_name: inviterName,
+        role: input.role || 'member',
+      },
+    })
+
+    // Send email notification (async, don't wait for it)
+    if (invitedUserEmail) {
+      sendTeamInvitationEmail(
+        invitedUserEmail,
+        invitedUserName,
+        team.name,
+        inviterName,
+        input.role || 'member'
+      ).catch(err => {
+        console.error('Failed to send invitation email:', err)
+        // Don't fail the request if email fails
+      })
     }
 
     return res.status(201).json({ success: true, data: member })

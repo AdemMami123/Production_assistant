@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { apiUrl, parseJsonSafe, authHeaders } from '@/lib/api'
 import EnvironmentSwitcher from '@/components/EnvironmentSwitcher'
 import { useEnvironment } from '@/components/EnvironmentProvider'
+import NotificationBell from '@/components/NotificationBell'
 import {
   ListTodo,
   Home,
@@ -261,9 +262,12 @@ export default function DashboardClient({ user }: DashboardClientProps) {
                 </Link>
               </div>
             </div>
-            <Button variant="outline" onClick={handleLogout} disabled={loading}>
-              {loading ? 'Logging out...' : 'Logout'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <Button variant="outline" onClick={handleLogout} disabled={loading}>
+                {loading ? 'Logging out...' : 'Logout'}
+              </Button>
+            </div>
           </div>
         </div>
       </nav>
