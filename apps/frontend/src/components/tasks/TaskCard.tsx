@@ -32,8 +32,8 @@ interface Task {
 
 interface TaskCardProps {
   task: Task
-  onEdit: (task: Task) => void
-  onDelete: (id: string) => void
+  onEdit?: (task: Task) => void
+  onDelete?: (id: string) => void
   onStatusChange: (id: string, status: TaskStatus) => void
   index: number
 }
@@ -104,19 +104,23 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, index }: Task
 
             {/* Actions Dropdown */}
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(task)}>
-                <Edit className="w-4 h-4" />
-                <span className="sr-only">Edit</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
-                onClick={() => onDelete(task.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="sr-only">Delete</span>
-              </Button>
+              {onEdit && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(task)}>
+                  <Edit className="w-4 h-4" />
+                  <span className="sr-only">Edit</span>
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                  onClick={() => onDelete(task.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>

@@ -1,0 +1,25 @@
+{
+  "name": "productivity-assistant-api",
+  "runtime": "node",
+  "plan": "free",
+  "region": "oregon",
+  "services": [
+    {
+      "type": "web",
+      "name": "api",
+      "runtime": "node",
+      "buildCommand": "npm run build",
+      "startCommand": "npm start",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "PORT",
+          "value": "4000"
+        }
+      ]
+    }
+  ]
+}

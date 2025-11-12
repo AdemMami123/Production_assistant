@@ -34,9 +34,9 @@ interface Column {
 interface KanbanColumnProps {
   column: Column
   tasks: Task[]
-  onAddTask: () => void
-  onEditTask: (task: Task) => void
-  onDeleteTask: (id: string) => void
+  onAddTask?: () => void
+  onEditTask?: (task: Task) => void
+  onDeleteTask?: (id: string) => void
 }
 
 export function KanbanColumn({
@@ -72,15 +72,17 @@ export function KanbanColumn({
               {tasks.length}
             </Badge>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onAddTask}
-            className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Task
-          </Button>
+          {onAddTask && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onAddTask}
+              className="w-full bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Task
+            </Button>
+          )}
         </div>
 
         {/* Tasks Container */}
@@ -98,7 +100,12 @@ export function KanbanColumn({
               </div>
             ) : (
               tasks.map(task => (
-                <KanbanCard key={task.id} task={task} onEdit={onEditTask} onDelete={onDeleteTask} />
+                <KanbanCard 
+                  key={task.id} 
+                  task={task} 
+                  onEdit={onEditTask} 
+                  onDelete={onDeleteTask} 
+                />
               ))
             )}
           </SortableContext>
