@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm run build:frontend",
+  "devCommand": "npm run dev:frontend",
+  "installCommand": "npm install",
+  "outputDirectory": "apps/frontend/.next"
+}

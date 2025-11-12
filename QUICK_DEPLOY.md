@@ -42,12 +42,15 @@ curl https://your-backend.onrender.com/health
 
 **URL:** https://vercel.com
 
-### Settings:
+### Settings (MONOREPO):
 ```
-Root Directory: apps/frontend
-Build Command: npm run build
-Output Directory: .next
+Root Directory: . (root - DO NOT select apps/frontend!)
+Build Command: npm run build:frontend
+Output Directory: apps/frontend/.next
+Install Command: npm install
 ```
+
+> ⚠️ **This is a monorepo!** Must build from root to access packages/shared
 
 ### Environment Variables:
 ```bash

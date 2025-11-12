@@ -107,15 +107,17 @@ GOOGLE_API_KEY=your-google-ai-api-key
 
 ### Step 2.3: Configure Build Settings
 
-**IMPORTANT:** Configure these settings:
+**IMPORTANT:** Configure these settings for monorepo deployment:
 
 | Setting | Value |
 |---------|-------|
 | **Framework Preset** | `Next.js` (auto-detected) |
-| **Root Directory** | Click "Edit" → Select `apps/frontend` |
-| **Build Command** | `npm run build` (default) |
-| **Output Directory** | `.next` (default) |
-| **Install Command** | `npm install` (default) |
+| **Root Directory** | Leave as `.` (root) - DO NOT select apps/frontend |
+| **Build Command** | `npm run build:frontend` |
+| **Output Directory** | `apps/frontend/.next` |
+| **Install Command** | `npm install` |
+
+> ⚠️ **CRITICAL:** Do NOT set root directory to `apps/frontend`! This is a monorepo and needs to build from root to access the shared package.
 
 ### Step 2.4: Add Environment Variables
 
